@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
+import SketchfabViewer from './SketchFabViewer';
 
 export default function ProjectView({ content = [], title }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,6 +67,14 @@ export default function ProjectView({ content = [], title }) {
         );
       case 'text':
         return <TextContentView content={currentItem} />;
+
+      case '3d':
+        return (
+          <SketchfabViewer 
+            modelId={currentItem.modelId}
+            title={currentItem.title}
+          />
+        );
       default:
         return null;
     }
@@ -132,3 +141,4 @@ export default function ProjectView({ content = [], title }) {
     </div>
   );
 }
+

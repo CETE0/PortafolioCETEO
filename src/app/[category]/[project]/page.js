@@ -1,25 +1,42 @@
-import ProjectView from '../../../components/layout/ProjectView';
-import { getProjectContent } from '../../../lib/projects';
+// src/app/[category]/[project]/page.js
+import ProjectView from '@/components/layout/ProjectView';
+import { getProjectContent } from '@/lib/projects';
 
-export default function ProjectPage({ params }) {
-  const project = getProjectContent(params.category, params.project);
+export default async function ProjectPage({ params }) {
+  console.log('Received params:', params);
   
-  if (!project) {
+  try {
+    console.log('Attempting to get project content with:', {
+      category: params.category,
+      project: params.project
+    });
+    
+    const project = getProjectContent(params.category, params.project);
+    console.log('Retrieved project data:', project);
+    
+    if (!project) {
+      console.log('No project found for:', params);
+      return (
+        <div className="h-full flex items-center justify-center text-black">
+          Project not found
+        </div>
+      );
+    }
+
     return (
-      <div className="h-full flex items-center justify-center text-gray-500">
-        Project not found
+      <div className="h-full">
+        <ProjectView 
+          title={project.title}
+          content={project.content}
+        />
+      </div>
+    );
+  } catch (error) {
+    console.error('Error in ProjectPage:', error);
+    return (
+      <div className="h-full flex items-center justify-center text-black">
+        Error loading project: {error.message}
       </div>
     );
   }
-
-  const content = project.images || project.content;
-
-  return (
-    <div className="h-full">
-      <ProjectView 
-        title={project.title}
-        content={content}
-      />
-    </div>
-  );
 }

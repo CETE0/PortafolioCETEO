@@ -15,12 +15,12 @@ export default function Home() {
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="relative h-64 bg-gray-100 rounded-lg overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-              Obra FT1
+              FTW1
             </div>
           </div>
           <div className="relative h-64 bg-gray-100 rounded-lg overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-              Obra FT2
+              FTW2
             </div>
           </div>
         </div>

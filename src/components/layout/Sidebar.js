@@ -21,7 +21,7 @@ const Sidebar = () => {
       name: 'MOTION',
       projects: [
         'video-art',
-        '3D-animation',
+        'animation',
         'experimental'
       ]
     },
@@ -32,12 +32,17 @@ const Sidebar = () => {
         'research'
       ]
     },
-    artwork: {
+    artworks: {
       name: 'ARTWORKS',
       projects: [
-        'ST',
+        'apropiacion-digi-fisica',
+        'atencion-sargento',
+        'automatoma',
         'autorretrato',
-        'atención sargento',
+        'cuidate-flor',
+        'para-ti-esto-es-un-juego',
+        '3D',
+
 
       ]
     }

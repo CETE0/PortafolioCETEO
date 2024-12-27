@@ -1,12 +1,13 @@
 export const projects = {
   photography: {
-    'autorretrato': {
+    'yofelia': {
       title: 'autorretrato',
       images: [
         {
           type: 'image',
           src: '/images/Autorretrato/1.jpg',
-          alt: 'Autorretrato 1'
+          alt: 'Autorretrato 1',
+          text:'Photoseries based of precarious selfportrait. Work in conjunction with @latermitta'
         },
         {
           type: 'image',
@@ -79,12 +80,12 @@ export const projects = {
         {
           type: 'youtube',
           id: 'D8qJjW6H5l0',  
-          title: 'Animation 1'
+          title: 'Animation 2'
         },
         {
           type: 'youtube',
           id: 'ZoIX3nLoeYw',  
-          title: 'Animation 1'
+          title: 'Animation 3'
         }
       ]
     },
@@ -98,6 +99,56 @@ export const projects = {
         }
       ]
     }
+  },
+
+  thrdworks: {
+    'photogrammetry': {
+      title: '3D Works',
+      content: [
+        {
+          type: '3d',
+          modelId: '612745c378834e1d88cb1c9733b74186',  
+          title: 'Pie scan',
+          description: 'Pie scan'
+        },
+        {
+          type: '3d',
+          modelId: '500f3d29141b45aaafc88cec538e93b5',  
+          title: 'UC1',
+          description: 'UC1'
+        },
+        {
+          type: '3d',
+          modelId: '48b6d69170d84cecaa5bf6196d047463',
+          title: 'UC2',
+          description: 'UC2'
+        }
+      ]
+    },
+    'organic':{
+      title: '3D Works',
+      content: [
+        {
+          type: '3d',
+          modelId: '612745c378834e1d88cb1c9733b74186',  
+          title: 'Pie scan',
+          description: 'Pie scan'
+        },
+        {
+          type: '3d',
+          modelId: '500f3d29141b45aaafc88cec538e93b5',  
+          title: 'UC1',
+          description: 'UC1'
+        },
+        {
+          type: '3d',
+          modelId: '48b6d69170d84cecaa5bf6196d047463',
+          title: 'UC2',
+          description: 'UC2'
+        }
+      ]
+    }
+    
   },
 
   artworks: {
@@ -248,31 +299,8 @@ export const projects = {
         },
         {
           type: 'youtube',
-          id: '-1NEsdmpiv0',  // Reemplazar con ID real
+          id: '-1NEsdmpiv0',
           title: 'Video'
-        }
-      ]
-    },
-    '3D': {
-      title: '3D Works',
-      content: [
-        {
-          type: '3d',
-          modelId: '612745c378834e1d88cb1c9733b74186',  // Ejemplo: Classic Film Camera
-          title: 'Classic Camera',
-          description: 'Recreación de una cámara analógica antigua'
-        },
-        {
-          type: '3d',
-          modelId: '500f3d29141b45aaafc88cec538e93b5',  // Ejemplo: Glass Bottle
-          title: 'Glass Vessel',
-          description: 'Pieza de vidrio con efectos de refracción'
-        },
-        {
-          type: '3d',
-          modelId: '48b6d69170d84cecaa5bf6196d047463',  // Ejemplo: Abstract Sculpture
-          title: 'Abstract Form',
-          description: 'Forma abstracta generada proceduralmente'
         }
       ]
     },
@@ -287,11 +315,10 @@ export function getProjectContent(category, projectId) {
   const project = getProject(category, projectId);
   if (!project) return null;
 
-  // Asegurarnos de que siempre devolvemos un objeto con la estructura correcta
   return {
     ...project,
     category,
     projectId,
-    content: project.images || project.content || [] // Asegurarnos de que siempre hay contenido
+    content: project.images || project.content || [] 
   };
 }

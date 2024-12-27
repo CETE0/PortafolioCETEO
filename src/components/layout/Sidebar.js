@@ -12,9 +12,7 @@ const Sidebar = () => {
     photography: {
       name: 'PHOTOGRAPHY',
       projects: [
-        'autorretrato',
-        'portraits',
-        'still-life'
+        'yofelia'
       ]
     },
     motion: {
@@ -25,11 +23,11 @@ const Sidebar = () => {
         'experimental'
       ]
     },
-    essays: {
-      name: 'ESSAYS',
+    thrdworks: {
+      name: '3D MODELS',
       projects: [
-        'writtenwork',
-        'research'
+        'photogrammetry',
+        'organic'
       ]
     },
     artworks: {
@@ -41,9 +39,6 @@ const Sidebar = () => {
         'autorretrato',
         'cuidate-flor',
         'para-ti-esto-es-un-juego',
-        '3D',
-
-
       ]
     }
   };

@@ -1,4 +1,3 @@
-// src/app/[category]/[project]/page.js
 import ProjectView from '@/components/layout/ProjectView';
 import { getProjectContent } from '@/lib/projects';
 

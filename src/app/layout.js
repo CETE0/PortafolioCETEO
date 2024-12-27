@@ -1,6 +1,12 @@
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import Sidebar from '../components/layout/Sidebar'
+import { Press_Start_2P } from 'next/font/google';
+
+const pressStart2P = Press_Start_2P({
+  weight: '400',
+  subsets: ['latin'],
+});
 
 const dmSans = DM_Sans({ 
   subsets: ['latin'],

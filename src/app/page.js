@@ -1,7 +1,71 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const projectImages = [
+  '/images/apropiaciondigifisica/1.JPG',
+  '/images/apropiaciondigifisica/2.JPG',
+  '/images/apropiaciondigifisica/3.JPG',
+  '/images/atencionsargento/1.jpg',
+  '/images/atencionsargento/2.jpg',
+  '/images/atencionsargento/3.jpeg',
+  '/images/Automata1/1.jpg',
+  '/images/Automata1/2.jpg',
+  '/images/Automata1/3.jpg',
+  '/images/Automata1/4.jpg',
+];
+
+const BackgroundImage = ({ url, shouldAnimate, isGameImage }) => {
+  if (isGameImage) {
+    return (
+      <motion.div
+        className="absolute inset-0"
+        initial={shouldAnimate ? { opacity: 0 } : false}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="relative w-full h-full">
+          <Image
+            src={url}
+            alt="Background"
+            fill
+            className="object-cover blur-[1px]"
+            priority
+          />
+          <div 
+            className="absolute inset-0 bg-pixelated" 
+            style={{
+              backgroundImage: `url(${url})`,
+              backgroundSize: 'cover',
+              imageRendering: 'pixelated'
+            }}
+          />
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="absolute inset-0"
+      initial={shouldAnimate ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Image
+        src={url}
+        alt="Background"
+        fill
+        className="object-cover"
+        priority
+      />
+    </motion.div>
+  );
+};
 
 export default function Home() {
   const [legFrame, setLegFrame] = useState(0);
@@ -14,13 +78,35 @@ export default function Home() {
   const [backgroundUrl, setBackgroundUrl] = useState('');
   const [firstKickDone, setFirstKickDone] = useState(false);
   const [showStart, setShowStart] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const backgroundMusicRef = useRef(null);
+  const kickSoundRef = useRef(null);
+  const nextImageSoundRef = useRef(null);
 
   const FRAME_DURATION = 200;
   const LEG_FRAMES = 12;
   const FALL_FRAMES = 5;
 
+  useEffect(() => {
+    backgroundMusicRef.current = new Audio('/sounds/background-loop.mp3');
+    kickSoundRef.current = new Audio('/sounds/kick.mp3');
+    nextImageSoundRef.current = new Audio('/sounds/next.mp3');
+
+    if (backgroundMusicRef.current) {
+      backgroundMusicRef.current.loop = true;
+      backgroundMusicRef.current.volume = 0.3;
+    }
+
+    return () => {
+      if (backgroundMusicRef.current) backgroundMusicRef.current.pause();
+    };
+  }, []);
+
   const getRandomImage = () => {
-    setBackgroundUrl(`https://picsum.photos/800/600?random=${Math.random()}`);
+    const randomIndex = Math.floor(Math.random() * projectImages.length);
+    setBackgroundUrl(projectImages[randomIndex]);
+    if (nextImageSoundRef.current) nextImageSoundRef.current.play();
   };
 
   const startAnimation = () => {
@@ -31,6 +117,9 @@ export default function Home() {
     setFallFrame(0);
     setIsLegAnimating(true);
     setIsFalling(false);
+    setIsFlipped(Math.random() > 0.5);
+
+    let shouldIncreaseScore = false;
 
     const legInterval = setInterval(() => {
       setLegFrame(prev => {
@@ -40,7 +129,9 @@ export default function Home() {
           setTimeout(() => {
             setCanKick(true);
             if (gameStarted) {
-              setScore(prev => prev + 1);
+              if (shouldIncreaseScore) {
+                setScore(prev => prev + 1);
+              }
               getRandomImage();
             } else if (!firstKickDone) {
               setFirstKickDone(true);
@@ -51,11 +142,19 @@ export default function Home() {
         }
         if (prev === 7) {
           setIsFalling(true);
+          if (kickSoundRef.current) kickSoundRef.current.play();
+          shouldIncreaseScore = true;
         }
         return prev + 1;
       });
     }, FRAME_DURATION);
-};
+  };
+
+  useEffect(() => {
+    if (gameStarted && backgroundMusicRef.current) {
+      backgroundMusicRef.current.play();
+    }
+  }, [gameStarted]);
 
   useEffect(() => {
     if (isFalling) {
@@ -91,28 +190,26 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black">
-      <div className="relative w-full max-w-4xl aspect-[4/3]">
+      <div className="relative w-full max-w-4xl aspect-[4/3] perspective-1000">
         {/* Background */}
         <div className="absolute inset-0">
-          {gameStarted ? (
-            backgroundUrl && (
-              <Image
-                src={backgroundUrl}
-                alt="Random Background"
-                fill
-                className="object-cover"
-                priority
+          <AnimatePresence mode="wait">
+            {gameStarted && backgroundUrl ? (
+              <BackgroundImage 
+                key={backgroundUrl}
+                url={backgroundUrl}
+                shouldAnimate={gameStarted}
+                isGameImage={true}
               />
-            )
-          ) : (
-            <Image
-              src="/images/game/background.png"
-              alt="Initial Background"
-              fill
-              className="object-cover"
-              priority
-            />
-          )}
+            ) : (
+              <BackgroundImage
+                key="initial-bg"
+                url="/images/game/background.png"
+                shouldAnimate={false}
+                isGameImage={false}
+              />
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Game Elements */}
@@ -145,7 +242,7 @@ export default function Home() {
 
           {/* Leg */}
           {isLegAnimating && (
-            <div className="absolute inset-0">
+            <div className={`absolute inset-0 ${isFlipped ? 'scale-x-[-1]' : ''}`}>
               <Image
                 src={`/images/game/leg/${legFrame + 1}.png`}
                 alt="Leg"
@@ -161,7 +258,7 @@ export default function Home() {
         <div className="absolute inset-0 z-20">
           {showStart && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-6xl font-['Press_Start_2P'] text-red-700">
+              <span className="text-6xl font-['Press_Start_2P'] text-white">
                 [START]
               </span>
             </div>
@@ -174,7 +271,7 @@ export default function Home() {
               )}
               {gameStarted && (
                 <>
-                  <span className="text-white opacity-50">shoot em'</span>
+                  <span className="text-white opacity-50">[kill em' all]</span>
                   <span className="text-red-500">[score:{score}]</span>
                 </>
               )}

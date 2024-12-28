@@ -33,11 +33,11 @@ const Sidebar = () => {
     artworks: {
       name: 'ARTWORKS',
       projects: [
-        'apropiacion-digi-fisica',
+        'traduccion-digifisica',
         'atencion-sargento',
         'automatoma',
         'autorretrato',
-        'cuidate-flor',
+        'tu-flor',
         'para-ti-esto-es-un-juego',
       ]
     }

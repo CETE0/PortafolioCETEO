@@ -152,7 +152,7 @@ export const projects = {
   },
 
   artworks: {
-    'apropiacion-digi-fisica': {
+    'traduccion-digifisica': {
       title: 'Apropiación Digi/Física',
       content: [
         {
@@ -249,8 +249,8 @@ export const projects = {
         }
       ]
     },
-    'cuidate-flor': {
-      title: 'Cuídate Flor',
+    'tu-flor': {
+      title: 'Tú Flor',
       content: [
         {
           type: 'image',

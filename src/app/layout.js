@@ -15,13 +15,19 @@ const dmSans = DM_Sans({
 })
 
 export const metadata = {
-  title: 'CETEO',
-  description: 'Artist Portfolio',
+  title: 'Portafolio CETEO',
+  description: 'Portafolio de artista',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body className={`${dmSans.variable} font-sans`}>
         <div className="flex min-h-screen">
           <Sidebar />

@@ -15,8 +15,8 @@ const dmSans = DM_Sans({
 })
 
 export const metadata = {
-  title: 'Portafolio CETEO',
-  description: 'Portafolio de artista',
+  title: 'CETEO',
+  description: 'Artist Portfolio',
 }
 
 export default function RootLayout({ children }) {

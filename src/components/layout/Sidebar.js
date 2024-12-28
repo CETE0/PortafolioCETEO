@@ -27,17 +27,17 @@ const Sidebar = () => {
       name: '3D MODELS',
       projects: [
         'photogrammetry',
-        'organic'
+        //'organic'
       ]
     },
     artworks: {
       name: 'ARTWORKS',
       projects: [
-        'traduccion-digifisica',
-        'atencion-sargento',
-        'automatoma',
+        'traducciones',
+        'atento-sargento',
+        'tomautoma',
         'autorretrato',
-        'tu-flor',
+        'una-flor-para-otra...',
         'para-ti-esto-es-un-juego',
       ]
     }

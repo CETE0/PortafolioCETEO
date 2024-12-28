@@ -3,6 +3,49 @@
 @tailwind utilities;
 
 
+@keyframes glitch-anim-1 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+@keyframes glitch-anim-2 {
+  0%, 100% { transform: translate(0); opacity: 0.75; }
+  25% { transform: translate(2px, 0); opacity: 0.5; }
+  50% { transform: translate(-1px, 1px); opacity: 0.9; }
+  75% { transform: translate(1px, -1px); opacity: 0.6; }
+}
+
+@keyframes hit-flash {
+  0% { filter: brightness(1) contrast(1); }
+  50% { filter: brightness(2) contrast(1.5) hue-rotate(45deg); }
+  100% { filter: brightness(1) contrast(1); }
+}
+
+.glitch-effect {
+  mix-blend-mode: screen;
+  animation: glitch-anim-1 0.3s infinite;
+  opacity: 0.8;
+}
+
+.glitch-effect-2 {
+  mix-blend-mode: multiply;
+  animation: glitch-anim-2 0.5s infinite;
+  opacity: 0.8;
+}
+
+.glitch-effect-3 {
+  mix-blend-mode: overlay;
+  filter: blur(0.5px);
+  opacity: 0.9;
+}
+
+.hit-flash {
+  animation: hit-flash 0.2s ease-out;
+}
+
 .bg-pixelated {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;

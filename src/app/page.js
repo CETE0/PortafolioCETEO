@@ -17,7 +17,7 @@ const projectImages = [
   '/images/Automata1/4.jpg',
 ];
 
-const BackgroundImage = ({ url, shouldAnimate, isGameImage }) => {
+const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
   if (isGameImage) {
     return (
       <motion.div
@@ -28,19 +28,25 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage }) => {
         transition={{ duration: 0.2 }}
       >
         <div className="relative w-full h-full">
-          <Image
-            src={url}
-            alt="Background"
-            fill
-            className="object-cover blur-[1px]"
-            priority
-          />
           <div 
-            className="absolute inset-0 bg-pixelated" 
+            className={`absolute inset-0 glitch-effect ${isHit ? 'hit-flash' : ''}`} 
             style={{
               backgroundImage: `url(${url})`,
-              backgroundSize: 'cover',
-              imageRendering: 'pixelated'
+              backgroundSize: 'cover'
+            }}
+          />
+          <div 
+            className={`absolute inset-0 glitch-effect-2 ${isHit ? 'hit-flash' : ''}`} 
+            style={{
+              backgroundImage: `url(${url})`,
+              backgroundSize: 'cover'
+            }}
+          />
+          <div 
+            className={`absolute inset-0 glitch-effect-3 ${isHit ? 'hit-flash' : ''}`} 
+            style={{
+              backgroundImage: `url(${url})`,
+              backgroundSize: 'cover'
             }}
           />
         </div>
@@ -79,6 +85,7 @@ export default function Home() {
   const [firstKickDone, setFirstKickDone] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isHit, setIsHit] = useState(false);
 
   const backgroundMusicRef = useRef(null);
   const kickSoundRef = useRef(null);
@@ -142,8 +149,10 @@ export default function Home() {
         }
         if (prev === 7) {
           setIsFalling(true);
+          setIsHit(true);
           if (kickSoundRef.current) kickSoundRef.current.play();
           shouldIncreaseScore = true;
+          setTimeout(() => setIsHit(false), 200);
         }
         return prev + 1;
       });
@@ -189,7 +198,7 @@ export default function Home() {
   }, [canKick, showStart]);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-black">
+    <div className="relative min-h-screen flex items-center justify-center bg-white">
       <div className="relative w-full max-w-4xl aspect-[4/3] perspective-1000">
         {/* Background */}
         <div className="absolute inset-0">
@@ -200,6 +209,7 @@ export default function Home() {
                 url={backgroundUrl}
                 shouldAnimate={gameStarted}
                 isGameImage={true}
+                isHit={isHit}
               />
             ) : (
               <BackgroundImage
@@ -258,22 +268,19 @@ export default function Home() {
         <div className="absolute inset-0 z-20">
           {showStart && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-6xl font-['Press_Start_2P'] text-white">
+              <span className="text-6xl font-['Press_Start_2P'] text-red-600">
                 [START]
               </span>
             </div>
           )}
           
-          <div className="absolute bottom-0 w-full bg-black py-2">
+          <div className="absolute bottom-0 w-full">
             <div className="flex justify-center gap-4 font-['Press_Start_2P'] text-sm">
               {!gameStarted && (
-                <span className="text-white opacity-50">[press space]</span>
+                <span className="text-red-600 ">[press space]</span>
               )}
               {gameStarted && (
-                <>
-                  <span className="text-white opacity-50">[kill em' all]</span>
-                  <span className="text-red-500">[score:{score}]</span>
-                </>
+                <span className="text-red-600 ">shoot em' up     [score:{score}]</span>
               )}
             </div>
           </div>

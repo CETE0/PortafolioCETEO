@@ -64,9 +64,8 @@ export default function Contact() {
             <div className="space-y-4">
               <h2 className="text-xl font-light text-black">About</h2>
               <p className="text-black text-sm font-light leading-relaxed">
-                New media artist based in Santiago, Chile. Working at the intersection of 
-                digital art, photography, and experimental filmmaking. Currently exploring 
-                themes of memory, technology, and human perception through various mediums.
+                Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile. Currently working at the intersection of 
+                digital art and experimental sculptural installation.
               </p>
             </div>
 

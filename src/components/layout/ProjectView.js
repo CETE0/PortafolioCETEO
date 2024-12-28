@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
-import SketchfabViewer from './SketchFabViewer';
+import SketchfabViewer from './SketchfabViewer';
 
 export default function ProjectView({ content = [], title }) {
   const [currentIndex, setCurrentIndex] = useState(0);

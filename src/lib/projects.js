@@ -7,7 +7,7 @@ export const projects = {
           type: 'image',
           src: '/images/Autorretrato/1.jpg',
           alt: 'Autorretrato 1',
-          text:'Photoseries based of precarious selfportrait. Work in conjunction with @latermitta'
+          text:'Photoseries based of precarious selfportrait. Work in conjunction with @latermitta (2024)'
         },
         {
           type: 'image',
@@ -95,7 +95,8 @@ export const projects = {
         {
           type: 'youtube',
           id: 'PISzy1Ry6i8',  
-          title: 'Experimental VR'
+          title: 'Experimental VR',
+          text: 'VR experience devolped in Godot engine'
         }
       ]
     }
@@ -152,38 +153,40 @@ export const projects = {
   },
 
   artworks: {
-    'traduccion-digifisica': {
-      title: 'Apropiación Digi/Física',
+    'traducciones': {
+      title: 'traducciones',
       content: [
         {
           type: 'image',
           src: '/images/apropiaciondigifisica/1.JPG',
-          alt: 'Apropiación 1'
+          alt: 'traducciones 1',
+          text: 'Multimedia installation exploring digital translation and materiality. An internet-sourced 3D scan transitions between physical and virtual states - manifesting as both a 3D printed artifact and an augmented reality presence. The work examines the layers of interpretation between digital and physical realms, questioning authenticity and representation in our hybrid reality. (2024)'
         },
         {
           type: 'image',
           src: '/images/apropiaciondigifisica/2.JPG',
-          alt: 'Apropiación 2'
+          alt: 'traducciones 2'
         },
         {
           type: 'image',
           src: '/images/apropiaciondigifisica/3.JPG',
-          alt: 'Apropiación 3'
+          alt: 'traducciones 3'
         },
         {
           type: 'youtube',
           id: '8NZEfdQFSbE',
-          title: 'Video de apropiación'
+          title: 'Video de traducciones'
         }
       ]
     },
-    'atencion-sargento': {
+    'atento-sargento': {
       title: 'Atención Sargento',
       images: [
         {
           type: 'image',
           src: '/images/atencionsargento/1.jpg',
-          alt: 'Atención Sargento 1'
+          alt: 'Atención Sargento 1',
+          text: 'Interactive installation where footage from the Gaza conflict remains frozen in time until met by a viewers gaze. The work explores the relationship between witnessing, responsibility, and the mediation of conflict through screens. (2023)'
         },
         {
           type: 'image',
@@ -197,13 +200,14 @@ export const projects = {
         }
       ]
     },
-    'automatoma': {
+    'tomautoma': {
       title: 'Automatoma',
       content: [
         {
           type: 'image',
           src: '/images/Automata1/1.jpg',
-          alt: 'Automatoma 1'
+          alt: 'Automatoma 1',
+          text: 'Interactive installation where each viewers facial features contribute to an evolving digital portrait. The piece creates a living, composite face that grows more complex with each interaction, questioning ideas of identity and collective consciousness. (2023)'
         },
         {
           type: 'image',
@@ -219,13 +223,6 @@ export const projects = {
           type: 'image',
           src: '/images/Automata1/4.jpg',
           alt: 'Automatoma 4'
-        },
-        {
-          type: 'text',
-          title: 'Automatoma',
-          body: `
-            // Aquí puedes añadir el texto que desees
-          `
         }
       ]
     },
@@ -235,7 +232,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/autorretrato3/IMG_7237.JPG',
-          alt: 'Autorretrato'
+          alt: 'Autorretrato',
+          text: 'Kinetic sculpture that embraces precariousness. A suspended torso connected to deteriorating machinery produces sound without achieving nothing more than spasms, reflecting on dysfunction the work explores the beauty of decay. (2024)'
         },
         {
           type: 'youtube',
@@ -249,13 +247,14 @@ export const projects = {
         }
       ]
     },
-    'tu-flor': {
+    'una-flor-para-otra...': {
       title: 'Tú Flor',
       content: [
         {
           type: 'image',
           src: '/images/CuidateFlor/1.JPG',
-          alt: 'Cuídate Flor 1'
+          alt: 'Cuídate Flor 1',
+          text: 'Interactive installation examining the inherent biases in facial recognition systems. Through a flower pot where digital flowers bloom, the work challenges predetermined categories of human classification, revealing the limitations of algorithmic definitions of identity. (2023)'
         },
         {
           type: 'image',
@@ -290,7 +289,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/para-ti-esto-es-un-juego/1.JPG',
-          alt: 'Para Ti 1'
+          alt: 'Para Ti 1',
+          text: 'Playful installation where augmented reality markers on balloons create a dynamic space of interaction. Digital stick figures mirror viewers movements while appropriating their facial features, culminating in questions about the boundaries of interactive art and games. (2024)',
         },
         {
           type: 'image',

@@ -89,8 +89,8 @@ export const projects = {
         }
       ]
     },
-    'experimental': {
-      title: 'Experimental',
+    'virtual-reality': {
+      title: 'vr experience',
       content: [
         {
           type: 'youtube',
@@ -149,7 +149,17 @@ export const projects = {
         }
       ]
     }
-    
+  },
+
+  experimental: {
+    'dopa': {
+      title: 'freedopamine!?!',
+      content: [
+        {
+          type: 'game'
+        }
+      ]
+    }
   },
 
   artworks: {
@@ -303,7 +313,7 @@ export const projects = {
           title: 'Video'
         }
       ]
-    },
+    }
   }
 };
 

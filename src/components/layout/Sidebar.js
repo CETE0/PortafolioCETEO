@@ -20,7 +20,7 @@ const Sidebar = () => {
       projects: [
         'video-art',
         'animation',
-        'experimental'
+        'virtual-reality'
       ]
     },
     thrdworks: {
@@ -28,6 +28,12 @@ const Sidebar = () => {
       projects: [
         'photogrammetry',
         //'organic'
+      ]
+    },
+    experimental: {
+      name: 'EXPERIMENTAL',
+      projects: [
+        'dopa'
       ]
     },
     artworks: {

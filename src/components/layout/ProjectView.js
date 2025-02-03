@@ -2,10 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
+
+const KickGame = dynamic(() => import('../games/KickGame'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <p className="text-black">Loading game...</p>
+    </div>
+  ),
+});
 
 export default function ProjectView({ content = [], title }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -24,6 +34,9 @@ export default function ProjectView({ content = [], title }) {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Solo permitir navegación si no estamos en el juego
+      if (currentItem.type === 'game') return;
+
       if (e.key === 'ArrowRight' && currentIndex < content.length - 1) {
         setDirection(1);
         setCurrentIndex(currentIndex + 1);
@@ -36,7 +49,7 @@ export default function ProjectView({ content = [], title }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, content.length]);
+  }, [currentIndex, content.length, currentItem.type]);
 
   const renderContent = () => {
     if (!currentItem) return null;
@@ -67,13 +80,18 @@ export default function ProjectView({ content = [], title }) {
         );
       case 'text':
         return <TextContentView content={currentItem} />;
-
       case '3d':
         return (
           <SketchfabViewer 
             modelId={currentItem.modelId}
             title={currentItem.title}
           />
+        );
+      case 'game':
+        return (
+          <div className="w-full h-full">
+            <KickGame />
+          </div>
         );
       default:
         return null;
@@ -82,7 +100,6 @@ export default function ProjectView({ content = [], title }) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Contenido principal */}
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
@@ -98,47 +115,48 @@ export default function ProjectView({ content = [], title }) {
         </AnimatePresence>
       </div>
 
-      {/* Footer con navegación y texto */}
-      <div className="bg-white border-t border-gray-100">
-        {/* Navegación */}
-        <div className="flex justify-between items-center px-8 py-4">
-          <motion.button
-            onClick={() => {
-              if (currentIndex > 0) {
-                setDirection(-1);
-                setCurrentIndex(currentIndex - 1);
-              }
-            }}
-            disabled={currentIndex === 0}
-            className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
-          >
-            PREV
-          </motion.button>
-          <span className="text-sm text-black">
-            {currentIndex + 1} / {content.length}
-          </span>
-          <motion.button
-            onClick={() => {
-              if (currentIndex < content.length - 1) {
-                setDirection(1);
-                setCurrentIndex(currentIndex + 1);
-              }
-            }}
-            disabled={currentIndex === content.length - 1}
-            className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
-          >
-            NEXT
-          </motion.button>
-        </div>
-
-        {/* Texto descriptivo */}
-        {currentItem.text && (
-          <div className="px-8 py-4 border-t border-gray-100">
-            <p className="text-sm text-black font-light">{currentItem.text}</p>
+      {/* Footer solo si no es un juego */}
+      {currentItem.type !== 'game' && (
+        <div className="bg-white border-t border-gray-100">
+          {/* Navegación */}
+          <div className="flex justify-between items-center px-8 py-4">
+            <motion.button
+              onClick={() => {
+                if (currentIndex > 0) {
+                  setDirection(-1);
+                  setCurrentIndex(currentIndex - 1);
+                }
+              }}
+              disabled={currentIndex === 0}
+              className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
+            >
+              PREV
+            </motion.button>
+            <span className="text-sm text-black">
+              {currentIndex + 1} / {content.length}
+            </span>
+            <motion.button
+              onClick={() => {
+                if (currentIndex < content.length - 1) {
+                  setDirection(1);
+                  setCurrentIndex(currentIndex + 1);
+                }
+              }}
+              disabled={currentIndex === content.length - 1}
+              className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
+            >
+              NEXT
+            </motion.button>
           </div>
-        )}
-      </div>
+
+          {/* Texto descriptivo */}
+          {currentItem.text && (
+            <div className="px-8 py-4 border-t border-gray-100">
+              <p className="text-sm text-black font-light">{currentItem.text}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
-

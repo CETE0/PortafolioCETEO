@@ -321,7 +321,7 @@ export const projects = {
           type: 'image',
           src: '/images/reparando/1.jpg',
           alt: 'Reparando 1',
-          text: '"Reparando" emerges as a critical inquiry into the intersections between the artificial and the organic—the mechanical and the human. The piece is articulated through a strategy of fragmentation where the incomplete acquires semiotic value. Through partial components that form a precarious mechanical entity, the work invites reflection on how the human can be discerned precisely in those spaces where the machine reveals its limitations. This approach materializes through sculptural techniques that consciously embrace a certain executive roughness as an expressive resource, rejecting technical virtuosity in favor of material authenticity. (2025)'
+          text: '"Reparando" A critical inquiry into the intersections between the artificial and the organic—the mechanical and the human. (2025)'
         },
         {
           type: 'image',
@@ -346,7 +346,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/peristalsis/1.jpg',
-          alt: 'Sistemas del Cuerpo 1'
+          alt: 'Sistemas del Cuerpo 1',
+          text: '(2025)'
         },
         {
           type: 'image',

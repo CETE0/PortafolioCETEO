@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
+import ImageViewerModal from './ImageViewerModal';
 
 const KickGame = dynamic(() => import('../games/KickGame'), {
   ssr: false,
@@ -20,6 +21,7 @@ const KickGame = dynamic(() => import('../games/KickGame'), {
 export default function ProjectView({ content = [], title }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   if (!content || content.length === 0) {
     return (
@@ -45,11 +47,14 @@ export default function ProjectView({ content = [], title }) {
         setDirection(-1);
         setCurrentIndex(currentIndex - 1);
       }
+      if (e.key === 'Escape' && isImageViewerOpen) {
+        setIsImageViewerOpen(false);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, content.length, currentItem.type]);
+  }, [currentIndex, content.length, currentItem.type, isImageViewerOpen]);
 
   const renderContent = () => {
     if (!currentItem) return null;
@@ -58,7 +63,10 @@ export default function ProjectView({ content = [], title }) {
       case 'image':
         return (
           <div className="relative w-full h-full flex items-center justify-center bg-white">
-            <div className="relative">
+            <div 
+              className="relative cursor-pointer"
+              onClick={() => setIsImageViewerOpen(true)}
+            >
               <Image
                 src={currentItem.src}
                 alt={currentItem.alt || ''}
@@ -109,6 +117,7 @@ export default function ProjectView({ content = [], title }) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -direction * 50 }}
             transition={{ duration: 0.3 }}
+            style={{ visibility: isImageViewerOpen ? 'hidden' : 'visible' }}
           >
             {renderContent()}
           </motion.div>
@@ -117,9 +126,12 @@ export default function ProjectView({ content = [], title }) {
 
       {/* Footer solo si no es un juego */}
       {currentItem.type !== 'game' && (
-        <div className="bg-white border-t border-gray-100">
+        <div 
+          className="bg-white border-t border-gray-100"
+          style={{ visibility: isImageViewerOpen ? 'hidden' : 'visible' }}
+        >
           {/* Navegación */}
-          <div className="flex justify-between items-center px-8 py-4">
+          <div className="flex justify-between items-center px-4 md:px-8 py-4">
             <motion.button
               onClick={() => {
                 if (currentIndex > 0) {
@@ -150,12 +162,43 @@ export default function ProjectView({ content = [], title }) {
           </div>
 
           {/* Texto descriptivo */}
-          {currentItem.text && (
-            <div className="px-8 py-4 border-t border-gray-100">
-              <p className="text-sm text-black font-light">{currentItem.text}</p>
-            </div>
-          )}
+          <div className="px-4 md:px-8 py-4 border-t border-gray-100">
+            <p className="text-sm text-black font-light">
+              {currentItem.text || content.find(item => item.text)?.text || ''}
+            </p>
+          </div>
         </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {currentItem.type === 'image' && (
+        <ImageViewerModal
+          isOpen={isImageViewerOpen}
+          onClose={() => setIsImageViewerOpen(false)}
+          image={currentItem}
+          onPrev={() => {
+            if (currentIndex > 0) {
+              const newIndex = currentIndex - 1;
+              setDirection(-1);
+              setCurrentIndex(newIndex);
+              if (content[newIndex].type !== 'image') {
+                setIsImageViewerOpen(false);
+              }
+            }
+          }}
+          onNext={() => {
+            if (currentIndex < content.length - 1) {
+              const newIndex = currentIndex + 1;
+              setDirection(1);
+              setCurrentIndex(newIndex);
+              if (content[newIndex].type !== 'image') {
+                setIsImageViewerOpen(false);
+              }
+            }
+          }}
+          hasPrev={currentIndex > 0}
+          hasNext={currentIndex < content.length - 1}
+        />
       )}
     </div>
   );

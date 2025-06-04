@@ -313,6 +313,68 @@ export const projects = {
           title: 'Video'
         }
       ]
+    },
+    'reparando': {
+      title: 'Reparando (2025)',
+      content: [
+        {
+          type: 'image',
+          src: '/images/reparando/1.jpg',
+          alt: 'Reparando 1',
+          text: '"Reparando" emerges as a critical inquiry into the intersections between the artificial and the organic—the mechanical and the human. The piece is articulated through a strategy of fragmentation where the incomplete acquires semiotic value. Through partial components that form a precarious mechanical entity, the work invites reflection on how the human can be discerned precisely in those spaces where the machine reveals its limitations. This approach materializes through sculptural techniques that consciously embrace a certain executive roughness as an expressive resource, rejecting technical virtuosity in favor of material authenticity. (2025)'
+        },
+        {
+          type: 'image',
+          src: '/images/reparando/2.jpg',
+          alt: 'Reparando 2'
+        },
+        {
+          type: 'youtube',
+          id: 'KrCNKpF1YUE',
+          title: 'Reparando Video 1'
+        },
+        {
+          type: 'youtube',
+          id: 'F66vLJSH7K0',
+          title: 'Reparando Video 2'
+        }
+      ]
+    },
+    'sistemas-del-cuerpo': {
+      title: 'Sistemas del Cuerpo (2025)',
+      content: [
+        {
+          type: 'image',
+          src: '/images/peristalsis/1.jpg',
+          alt: 'Sistemas del Cuerpo 1'
+        },
+        {
+          type: 'image',
+          src: '/images/peristalsis/2.jpg',
+          alt: 'Sistemas del Cuerpo 2'
+        },
+      ]
+    },
+    'te-juro-que-es-primera-vez-que-me-pasa': {
+      title: 'Te juro que es primera vez que me pasa (2025)',
+      content: [
+        {
+          type: 'image',
+          src: '/images/picaro/1.jpg',
+          alt: 'Te juro que es primera vez que me pasa 1',
+          text: 'Work in conjunction with Marco Gómez for ExpoWeed 2025.'
+        },
+        {
+          type: 'image',
+          src: '/images/picaro/2.jpg',
+          alt: 'Te juro que es primera vez que me pasa 2'
+        },
+        {
+          type: 'youtube',
+          id: 'AxZEhWCQ838',
+          title: 'Te juro que es primera vez que me pasa Video'
+        }
+      ]
     }
   }
 };

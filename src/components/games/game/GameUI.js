@@ -24,7 +24,7 @@ export class GameUI {
     this.instructions.style.zIndex = '1000';
     this.instructions.style.textShadow = '2px 2px 4px rgba(255, 0, 0, 0.5)';
     this.instructions.innerHTML = `
-      <h1 style="color: #ff0000; margin-bottom: 20px; font-size: 32px; font-family: monospace;">ABSTINENCE!?!</h1>
+      <h1 style="color: #ff0000; margin-bottom: 20px; font-size: 32px; font-family: monospace;">ABSTINENCE (˶ˆᗜˆ˵) !?!</h1>
       <div style="margin-bottom: 20px;">
         <p style="margin: 10px 0;"><span style="color: #ff0000;">></span> WASD / ARROWS = MOVE</p>
         <p style="margin: 10px 0;"><span style="color: #ff0000;">></span> SPACE = JUMP</p>

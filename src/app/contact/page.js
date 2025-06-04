@@ -43,11 +43,11 @@ export default function Contact() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Contenido principal */}
-      <div className="flex-grow flex items-center justify-center p-8">
-        <div className="flex max-w-5xl w-full gap-16">
+      <div className="flex-grow flex items-center justify-center p-4 md:p-8">
+        <div className="flex flex-col md:flex-row max-w-5xl w-full gap-8 md:gap-16">
           {/* Columna izquierda - Información */}
           <motion.div 
-            className="w-1/2 space-y-12"
+            className="w-full md:w-1/2 space-y-8 md:space-y-12"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
@@ -71,38 +71,38 @@ export default function Contact() {
 
             {/* Social */}
             <div className="space-y-4">
-  <h2 className="text-xl font-light text-black">Social</h2>
-  <div className="space-y-2">
-    <a 
-      href="https://www.instagram.com/c.e.teo/" 
-      target="_blank" 
-      rel="noopener noreferrer" 
-      className="block text-sm text-black hover:text-red-500 transition-colors font-light"
-    >
-      Instagram
-    </a>
-  </div>
-</div>
+              <h2 className="text-xl font-light text-black">Social</h2>
+              <div className="space-y-2">
+                <a 
+                  href="https://www.instagram.com/c.e.teo/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="block text-sm text-black hover:text-red-500 transition-colors font-light"
+                >
+                  Instagram
+                </a>
+              </div>
+            </div>
           </motion.div>
 
           {/* Columna derecha - GIF */}
           <motion.div 
-            className="w-1/2 flex items-center justify-center"
+            className="w-full md:w-1/2 flex items-center justify-center"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
->
+          >
             <div className="relative w-full">
-    <Image
-      src="/images/contact/gifcontacto.gif"
-      alt="Animated graphic"
-      width={800}
-      height={1067}
-      className="w-auto h-auto"
-      priority
-    />
-  </div>
-</motion.div>
+              <Image
+                src="/images/contact/gifcontacto.gif"
+                alt="Animated graphic"
+                width={800}
+                height={1067}
+                className="w-auto h-auto"
+                priority
+              />
+            </div>
+          </motion.div>
         </div>
       </div>
 
@@ -113,7 +113,7 @@ export default function Contact() {
       >
         {/* CV Header/Toggle */}
         <motion.button
-          className="w-full py-4 px-8 flex items-center justify-between text-black hover:text-red-500 transition-colors"
+          className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 transition-colors"
           onClick={() => setIsCvOpen(!isCvOpen)}
         >
           <span className="text-xl font-light">CV</span>
@@ -135,33 +135,14 @@ export default function Contact() {
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="px-8 pb-8 max-w-5xl mx-auto">
-                <div className="space-y-6">
-                  {cvItems.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex gap-8"
-                    >
-                      <span className="w-24 text-sm font-light text-gray-500">
-                        {item.period}
-                      </span>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-light text-black">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm font-light text-gray-500">
-                          {item.institution}
-                        </p>
-                        <span className="text-sm font-light text-gray-400">
-                          {item.status}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+              <div className="px-4 md:px-8 py-4 space-y-4">
+                {cvItems.map((item, index) => (
+                  <div key={index} className="space-y-1">
+                    <p className="text-sm font-medium text-black">{item.period}</p>
+                    <p className="text-sm text-black">{item.title}</p>
+                    <p className="text-sm text-black/70">{item.institution}</p>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}

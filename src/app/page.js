@@ -15,6 +15,23 @@ const projectImages = [
   '/images/Automata1/2.jpg',
   '/images/Automata1/3.jpg',
   '/images/Automata1/4.jpg',
+  '/images/Autorretrato/1.jpg',
+  '/images/Autorretrato/2.jpg',
+  '/images/Autorretrato/3.jpg',
+  '/images/Autorretrato/4.jpg',
+  '/images/Autorretrato/5.jpg',
+  '/images/Autorretrato/6.jpg',
+  '/images/Autorretrato/7.jpg',
+  '/images/Autorretrato/8.jpg',
+  '/images/Autorretrato/9.jpg',
+  '/images/Autorretrato/10.JPG',
+  '/images/CuidateFlor/1.JPG',
+  '/images/CuidateFlor/2.JPG',
+  '/images/CuidateFlor/3.JPG',
+  '/images/CuidateFlor/4.JPG',
+  '/images/para-ti-esto-es-un-juego/1.JPG',
+  '/images/para-ti-esto-es-un-juego/2.JPG',
+  '/images/autorretrato3/IMG_7237.JPG',
 ];
 
 const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
@@ -110,6 +127,23 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    // Preload animation images
+    const plinthFrames = [1,2,3,4,5].map(i => `/images/game/plinth/${i}.png`);
+    const objectFrames = [1,2,3,4,5].map(i => `/images/game/object/${i}.png`);
+    const legFrames = Array.from({length: 12}, (_, i) => `/images/game/leg/${i+1}.png`);
+    const allImages = [...plinthFrames, ...objectFrames, ...legFrames, ...projectImages];
+    allImages.forEach(src => {
+      const img = new window.Image();
+      img.src = src;
+    });
+    // Preload sounds
+    ['/sounds/background-loop.mp3', '/sounds/kick.mp3', '/sounds/next.mp3'].forEach(src => {
+      const audio = new window.Audio();
+      audio.src = src;
+    });
+  }, []);
+
   const getRandomImage = () => {
     const randomIndex = Math.floor(Math.random() * projectImages.length);
     setBackgroundUrl(projectImages[randomIndex]);
@@ -180,26 +214,31 @@ export default function Home() {
     }
   }, [isFalling]);
 
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (e.code === 'Space' && canKick) {
-        e.preventDefault();
-        if (showStart) {
-          setGameStarted(true);
-          setShowStart(false);
-          getRandomImage();
-        }
-        startAnimation();
-      }
-    };
+  const handleGameAreaClick = () => {
+    if (!gameStarted) {
+      setGameStarted(true);
+      setShowStart(false);
+      getRandomImage();
+    } else {
+      startAnimation();
+    }
+  };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [canKick, showStart]);
+  // Play initial animation on first load
+  useEffect(() => {
+    if (!gameStarted && !isLegAnimating && !isFalling && !firstKickDone) {
+      startAnimation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-white">
-      <div className="relative w-full max-w-4xl aspect-[4/3] perspective-1000">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-white">
+      <div
+        className="relative w-full max-w-4xl aspect-[4/3] perspective-1000"
+        onClick={handleGameAreaClick}
+        style={{ cursor: 'pointer' }}
+      >
         {/* Background */}
         <div className="absolute inset-0">
           <AnimatePresence mode="wait">
@@ -221,7 +260,6 @@ export default function Home() {
             )}
           </AnimatePresence>
         </div>
-
         {/* Game Elements */}
         <div className="absolute inset-0 z-10">
           {!gameStarted && (
@@ -236,7 +274,6 @@ export default function Home() {
                   priority
                 />
               </div>
-
               {/* Object */}
               <div className="absolute inset-0">
                 <Image
@@ -249,7 +286,6 @@ export default function Home() {
               </div>
             </>
           )}
-
           {/* Leg */}
           {isLegAnimating && (
             <div className={`absolute inset-0 ${isFlipped ? 'scale-x-[-1]' : ''}`}>
@@ -263,9 +299,8 @@ export default function Home() {
             </div>
           )}
         </div>
-
-        {/* UI */}
-        <div className="absolute inset-0 z-20">
+        {/* UI overlay (start text) */}
+        <div className="absolute inset-0 z-20 pointer-events-none">
           {showStart && (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-6xl font-['Press_Start_2P'] text-red-600">
@@ -273,18 +308,16 @@ export default function Home() {
               </span>
             </div>
           )}
-          
-          <div className="absolute bottom-0 w-full">
-            <div className="flex justify-center gap-4 font-['Press_Start_2P'] text-sm">
-              {!gameStarted && (
-                <span className="text-red-600 ">[press space]</span>
-              )}
-              {gameStarted && (
-                <span className="text-red-600 ">shoot em' up     [score:{score}]</span>
-              )}
-            </div>
-          </div>
         </div>
+      </div>
+      {/* UI text now below the image */}
+      <div className="w-full flex justify-center gap-4 font-['Press_Start_2P'] text-sm mt-4">
+        {!gameStarted && (
+          <span className="text-red-600 ">[tap/click to start]</span>
+        )}
+        {gameStarted && (
+          <span className="text-red-600 ">shoot em' up     [score:{score}]</span>
+        )}
       </div>
     </div>
   );

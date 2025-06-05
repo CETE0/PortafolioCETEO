@@ -354,6 +354,26 @@ export const projects = {
           src: '/images/peristalsis/2.jpg',
           alt: 'Sistemas del Cuerpo 2'
         },
+        {
+          type: 'image',
+          src: '/images/peristalsis/3.jpg',
+          alt: 'Sistemas del Cuerpo 3'
+        },
+        {
+          type: 'image',
+          src: '/images/peristalsis/4.jpg',
+          alt: 'Sistemas del Cuerpo 4'
+        },
+        {
+          type: 'image',
+          src: '/images/peristalsis/5.jpg',
+          alt: 'Sistemas del Cuerpo 5'
+        },
+        {
+          type: 'image',
+          src: '/images/peristalsis/6.jpg',
+          alt: 'Sistemas del Cuerpo 6'
+        },
       ]
     },
     'te-juro-que-es-primera-vez-que-me-pasa': {
@@ -369,6 +389,21 @@ export const projects = {
           type: 'image',
           src: '/images/picaro/2.jpg',
           alt: 'Te juro que es primera vez que me pasa 2'
+        },
+        {
+          type: 'image',
+          src: '/images/picaro/3.jpg',
+          alt: 'Te juro que es primera vez que me pasa 3'
+        },
+        {
+          type: 'image',
+          src: '/images/picaro/4.jpg',
+          alt: 'Te juro que es primera vez que me pasa 4'
+        },
+        {
+          type: 'image',
+          src: '/images/picaro/5.jpg',
+          alt: 'Te juro que es primera vez que me pasa 5'
         },
         {
           type: 'youtube',

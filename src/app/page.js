@@ -49,21 +49,24 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
             className={`absolute inset-0 glitch-effect ${isHit ? 'hit-flash' : ''}`} 
             style={{
               backgroundImage: `url(${url})`,
-              backgroundSize: 'cover'
+              backgroundSize: 'cover',
+              willChange: 'transform, opacity'
             }}
           />
           <div 
             className={`absolute inset-0 glitch-effect-2 ${isHit ? 'hit-flash' : ''}`} 
             style={{
               backgroundImage: `url(${url})`,
-              backgroundSize: 'cover'
+              backgroundSize: 'cover',
+              willChange: 'transform, opacity'
             }}
           />
           <div 
             className={`absolute inset-0 glitch-effect-3 ${isHit ? 'hit-flash' : ''}`} 
             style={{
               backgroundImage: `url(${url})`,
-              backgroundSize: 'cover'
+              backgroundSize: 'cover',
+              willChange: 'transform, opacity'
             }}
           />
         </div>
@@ -83,8 +86,15 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
         src={url}
         alt="Background"
         fill
-        className="object-cover"
+        className="object-cover opacity-0 transition-opacity duration-300"
         priority
+        quality={90}
+        sizes="100vw"
+        loading="eager"
+        onLoad={(e) => {
+          e.target.classList.remove('opacity-0');
+          e.target.classList.add('opacity-100');
+        }}
       />
     </motion.div>
   );
@@ -128,19 +138,39 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Preload animation images
-    const plinthFrames = [1,2,3,4,5].map(i => `/images/game/plinth/${i}.png`);
-    const objectFrames = [1,2,3,4,5].map(i => `/images/game/object/${i}.png`);
-    const legFrames = Array.from({length: 12}, (_, i) => `/images/game/leg/${i+1}.png`);
+    // Preload critical animation images first
+    const criticalImages = [
+      '/images/game/background.png',
+      '/images/game/plinth/1.png',
+      '/images/game/object/1.png',
+      '/images/game/leg/1.png'
+    ];
+
+    // Preload critical images with higher priority
+    criticalImages.forEach(src => {
+      const img = new window.Image();
+      img.src = src;
+      img.fetchPriority = 'high';
+    });
+
+    // Preload remaining animation images
+    const plinthFrames = [2,3,4,5].map(i => `/images/game/plinth/${i}.png`);
+    const objectFrames = [2,3,4,5].map(i => `/images/game/object/${i}.png`);
+    const legFrames = Array.from({length: 11}, (_, i) => `/images/game/leg/${i+2}.png`);
+    
+    // Preload project images with lower priority
     const allImages = [...plinthFrames, ...objectFrames, ...legFrames, ...projectImages];
     allImages.forEach(src => {
       const img = new window.Image();
       img.src = src;
+      img.fetchPriority = 'low';
     });
+
     // Preload sounds
     ['/sounds/background-loop.mp3', '/sounds/kick.mp3', '/sounds/next.mp3'].forEach(src => {
       const audio = new window.Audio();
       audio.src = src;
+      audio.preload = 'auto';
     });
   }, []);
 
@@ -215,6 +245,9 @@ export default function Home() {
   }, [isFalling]);
 
   const handleGameAreaClick = () => {
+    // Only allow interaction if the game has started or if we're showing the start UI
+    if (!gameStarted && !showStart) return;
+    
     if (!gameStarted) {
       setGameStarted(true);
       setShowStart(false);
@@ -224,20 +257,28 @@ export default function Home() {
     }
   };
 
-  // Play initial animation on first load
+  // Add a new effect to handle initial animation timing
   useEffect(() => {
-    if (!gameStarted && !isLegAnimating && !isFalling && !firstKickDone) {
-      startAnimation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const startInitialAnimation = () => {
+      if (!gameStarted && !isLegAnimating && !isFalling && !firstKickDone) {
+        // Small delay to ensure assets are loaded
+        const timer = setTimeout(() => {
+          startAnimation();
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    // Start the initial animation immediately
+    startInitialAnimation();
+  }, [gameStarted, isLegAnimating, isFalling, firstKickDone]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-white">
       <div
-        className="relative w-full max-w-4xl aspect-[4/3] perspective-1000"
+        className={`relative w-full max-w-4xl aspect-[4/3] perspective-1000 ${!gameStarted && !showStart ? 'pointer-events-none' : ''}`}
         onClick={handleGameAreaClick}
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: showStart || gameStarted ? 'pointer' : 'default' }}
       >
         {/* Background */}
         <div className="absolute inset-0">

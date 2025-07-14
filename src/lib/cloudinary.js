@@ -5,16 +5,6 @@
  * @returns {string} URL optimizada
  */
 export function getCloudinaryUrl(publicId, options = {}) {
-  // Ajuste: Si las imágenes fueron subidas con folder 'portfolio' y el publicId ya incluye
-  // 'portfolio/', añadimos un segundo 'portfolio/' para coincidir con la ruta real
-  // (evita tener que duplicar todos los ids manualmente)
-  if (
-    typeof publicId === 'string' &&
-    publicId.startsWith('portfolio/') &&
-    !publicId.startsWith('portfolio/portfolio/')
-  ) {
-    publicId = `portfolio/${publicId}`;
-  }
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your_cloud_name_here';
   
   const {
@@ -55,9 +45,9 @@ export function getCloudinaryUrl(publicId, options = {}) {
  */
 export const imageMap = {
   // Apropiación Digital/Física
-  '/images/apropiaciondigifisica/1.JPG': 'portfolio/portfolio/apropiaciondigifisica/1',
-  '/images/apropiaciondigifisica/2.JPG': 'portfolio/portfolio/apropiaciondigifisica/2',
-  '/images/apropiaciondigifisica/3.JPG': 'portfolio/portfolio/apropiaciondigifisica/3',
+  '/images/apropiaciondigifisica/1.JPG': 'portfolio/apropiaciondigifisica/1',
+  '/images/apropiaciondigifisica/2.JPG': 'portfolio/apropiaciondigifisica/2',
+  '/images/apropiaciondigifisica/3.JPG': 'portfolio/apropiaciondigifisica/3',
   
   // Atención Sargento
   '/images/atencionsargento/1.jpg': 'portfolio/atencionsargento/1',

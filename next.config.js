@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === 'production';
 const nextConfig = {
   images: {
     domains: ['res.cloudinary.com'],
@@ -26,10 +25,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 3600,
     dangerouslyAllowSVG: true,
-    ...(isProd && {
-      // En producción, bloqueo de eval para mayor seguridad. En dev lo omitimos para evitar errores.
-      contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    }),
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 }
 

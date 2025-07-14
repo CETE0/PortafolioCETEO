@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../../lib/cloudinary';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
@@ -68,12 +69,13 @@ export default function ProjectView({ content = [], title }) {
               onClick={() => setIsImageViewerOpen(true)}
             >
               <Image
-                src={currentItem.src}
+                src={getOptimizedImageUrl(currentItem.src, { width: 1600, height: 1200, quality: 85 })}
                 alt={currentItem.alt || ''}
                 width={6240}
                 height={4160}
                 className="w-auto h-auto object-contain"
                 style={{ maxHeight: 'calc(100vh - 120px)' }}
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 70vw"
                 priority={currentIndex === 0}
               />
             </div>
@@ -127,7 +129,7 @@ export default function ProjectView({ content = [], title }) {
       {/* Footer solo si no es un juego */}
       {currentItem.type !== 'game' && (
         <div 
-          className="bg-white border-t border-gray-100"
+          className="bg-white border-t border-white"
           style={{ visibility: isImageViewerOpen ? 'hidden' : 'visible' }}
         >
           {/* Navegación */}
@@ -162,7 +164,7 @@ export default function ProjectView({ content = [], title }) {
           </div>
 
           {/* Texto descriptivo */}
-          <div className="px-4 md:px-8 py-4 border-t border-gray-100">
+          <div className="px-4 md:px-8 py-4 border-t border-white">
             <p className="text-sm text-black font-light">
               {currentItem.text || content.find(item => item.text)?.text || ''}
             </p>

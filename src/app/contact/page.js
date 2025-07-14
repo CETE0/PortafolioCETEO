@@ -108,7 +108,7 @@ export default function Contact() {
 
       {/* CV Section */}
       <motion.div 
-        className="border-t border-gray-100"
+        className="border-t border-white"
         initial={false}
       >
         {/* CV Header/Toggle */}

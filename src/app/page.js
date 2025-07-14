@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../lib/cloudinary';
 
 const projectImages = [
   '/images/apropiaciondigifisica/1.JPG',
@@ -83,7 +84,7 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
       transition={{ duration: 0.2 }}
     >
       <Image
-        src={url}
+        src={getOptimizedImageUrl(url, { width: 1200, height: 900, quality: 85 })}
         alt="Background"
         fill
         className="object-cover opacity-0 transition-opacity duration-300"
@@ -153,30 +154,42 @@ export default function Home() {
       img.fetchPriority = 'high';
     });
 
-    // Preload remaining animation images
-    const plinthFrames = [2,3,4,5].map(i => `/images/game/plinth/${i}.png`);
-    const objectFrames = [2,3,4,5].map(i => `/images/game/object/${i}.png`);
-    const legFrames = Array.from({length: 11}, (_, i) => `/images/game/leg/${i+2}.png`);
+    // Preload a single random portfolio image (low priority) so the first kick feels instant
+    const firstImgSrc = projectImages[Math.floor(Math.random() * projectImages.length)];
+    const firstPortfolioImg = new window.Image();
+    firstPortfolioImg.src = getOptimizedImageUrl(firstImgSrc, { width: 800, height: 600, quality: 75 });
+    firstPortfolioImg.fetchPriority = 'low';
+
+    // Defer the rest of the heavy assets (extra frames & sounds) until the browser is idle
+    const preloadRest = () => {
+      const plinthFrames = [2, 3, 4, 5].map(i => `/images/game/plinth/${i}.png`);
+      const objectFrames = [2, 3, 4, 5].map(i => `/images/game/object/${i}.png`);
+      const legFrames = Array.from({ length: 11 }, (_, i) => `/images/game/leg/${i + 2}.png`);
     
-    // Preload project images with lower priority
-    const allImages = [...plinthFrames, ...objectFrames, ...legFrames, ...projectImages];
-    allImages.forEach(src => {
+      [...plinthFrames, ...objectFrames, ...legFrames].forEach(src => {
       const img = new window.Image();
       img.src = src;
-      img.fetchPriority = 'low';
     });
 
-    // Preload sounds
+      // Non-blocking preload of audio assets
     ['/sounds/background-loop.mp3', '/sounds/kick.mp3', '/sounds/next.mp3'].forEach(src => {
       const audio = new window.Audio();
       audio.src = src;
       audio.preload = 'auto';
     });
+    };
+
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(preloadRest);
+    } else {
+      setTimeout(preloadRest, 1500);
+    }
   }, []);
 
   const getRandomImage = () => {
     const randomIndex = Math.floor(Math.random() * projectImages.length);
-    setBackgroundUrl(projectImages[randomIndex]);
+    const selectedImage = projectImages[randomIndex];
+    setBackgroundUrl(selectedImage);
     if (nextImageSoundRef.current) nextImageSoundRef.current.play();
   };
 

@@ -53,7 +53,7 @@ const Sidebar = () => {
   };
 
   return (
-    <nav className="h-screen w-full bg-white p-6 border-r border-gray-200 overflow-y-auto relative flex flex-col justify-between">
+    <nav className="h-screen w-full bg-white p-6 border-r border-white overflow-y-auto relative flex flex-col justify-between">
       <div>
         {/* Header */}
         <div className="mb-8 pt-12 md:pt-0">

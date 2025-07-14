@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { getOptimizedImageUrl } from '../../lib/cloudinary';
 
 export default function ImageViewerModal({ isOpen, onClose, image, onPrev, onNext, hasPrev, hasNext }) {
   if (!isOpen) return null;
@@ -68,7 +69,7 @@ export default function ImageViewerModal({ isOpen, onClose, image, onPrev, onNex
           onClick={(e) => e.stopPropagation()}
         >
           <Image
-            src={image.src}
+            src={getOptimizedImageUrl(image.src, { width: 1920, height: 1080, quality: 90 })}
             alt={image.alt || ''}
             width={1920}
             height={1080}

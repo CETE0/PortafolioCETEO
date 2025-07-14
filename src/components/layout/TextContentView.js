@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image'; 
+import { getOptimizedImageUrl } from '../../lib/cloudinary';
 
 export default function TextContentView({ content }) {
   if (!content) return null;
@@ -37,7 +38,7 @@ export default function TextContentView({ content }) {
         <figure key={index} className="my-8">
           <div className="relative w-full h-auto">
             <Image
-              src={image.src}
+              src={getOptimizedImageUrl(image.src, { width: 800, height: 500, quality: 80 })}
               alt={image.alt}
               width={800}
               height={500}

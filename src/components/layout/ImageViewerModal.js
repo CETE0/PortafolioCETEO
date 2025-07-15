@@ -9,9 +9,11 @@ export default function ImageViewerModal({
   onPrev, 
   onNext, 
   hasPrev, 
-  hasNext 
+  hasNext,
+  currentIndex,
+  totalItems
 }) {
-  if (!isOpen) return null;
+  if (!isOpen || !image) return null;
 
   // Handler to only close if the background itself is clicked
   const handleBackgroundClick = (e) => {
@@ -111,11 +113,11 @@ export default function ImageViewerModal({
           />
         </motion.div>
 
-        {/* Navigation hint */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-white/50 z-10 flex items-center space-x-4">
-          <span>Arrow keys to navigate</span>
-          <span>•</span>
-          <span>ESC to close</span>
+        {/* Image counter */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-white/50 z-10">
+          <span className="font-['Press_Start_2P']">
+            {currentIndex} / {totalItems}
+          </span>
         </div>
       </motion.div>
     </AnimatePresence>

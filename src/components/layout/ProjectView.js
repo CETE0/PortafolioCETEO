@@ -25,6 +25,8 @@ export default function ProjectView({ content = [], title }) {
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [isPreloading, setIsPreloading] = useState(false);
   const [preloadStats, setPreloadStats] = useState({ loaded: 0, total: 0 });
+  const [preloadCompleted, setPreloadCompleted] = useState(false);
+  const [showPreloadIndicator, setShowPreloadIndicator] = useState(false);
   
   const imagePreloader = useImagePreloader();
 
@@ -38,31 +40,72 @@ export default function ProjectView({ content = [], title }) {
 
   const currentItem = content[currentIndex];
 
-  // Advanced preloading with priority system
+  // Advanced preloading with priority system and real-time progress - only once per project
   useEffect(() => {
     const preloadProjectImages = async () => {
-      setIsPreloading(true);
-      
       // Get all image items from content
       const imageItems = content.filter(item => item.type === 'image');
       
       if (imageItems.length === 0) {
         setIsPreloading(false);
+        setShowPreloadIndicator(false);
         return;
       }
 
+      // Initialize preloading state
+      setIsPreloading(true);
+      setShowPreloadIndicator(true);
+      setPreloadCompleted(false);
       setPreloadStats({ loaded: 0, total: imageItems.length });
 
       try {
-        // Use the advanced preloader with priority system
-        const results = await imagePreloader.preloadWithPriority(imageItems, currentIndex);
+        // Prioritize images based on distance from current position (start with first image)
+        const prioritizedItems = imageItems.map((item, index) => {
+          const distance = Math.abs(index - 0); // Always start from first image
+          let priority = 'normal';
+          
+          if (distance === 0) priority = 'high';
+          else if (distance <= 2) priority = 'normal';
+          else priority = 'low';
+          
+          return { ...item, priority, index };
+        });
+
+        // Sort by priority and distance
+        prioritizedItems.sort((a, b) => {
+          const priorityOrder = { high: 0, normal: 1, low: 2 };
+          const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+          
+          if (priorityDiff !== 0) return priorityDiff;
+          return Math.abs(a.index - 0) - Math.abs(b.index - 0); // Always prioritize from first image
+        });
+
+        // Load images one by one to show real-time progress
+        let loaded = 0;
+        const contexts = ['gallery', 'modal'];
         
-        // Count successful loads
-        const successfulLoads = results.filter(result => 
-          result.status === 'fulfilled' && result.value.status === 'loaded'
-        ).length;
+        for (const item of prioritizedItems) {
+          for (const context of contexts) {
+            try {
+              await imagePreloader.preloadImage(item.src, context, item.priority || 'normal');
+            } catch (error) {
+              console.warn(`Failed to preload ${item.src} for ${context}:`, error);
+            }
+          }
+          
+          loaded++;
+          setPreloadStats({ loaded, total: imageItems.length });
+        }
+
+        // Mark as completed and start completion animation
+        setPreloadCompleted(true);
+        setIsPreloading(false);
         
-        setPreloadStats({ loaded: successfulLoads, total: imageItems.length });
+        // Hide indicator after animation
+        setTimeout(() => {
+          setShowPreloadIndicator(false);
+          setPreloadCompleted(false);
+        }, 1500); // Time for green flash + fade out
         
         // Log cache stats for debugging
         if (process.env.NODE_ENV === 'development') {
@@ -70,13 +113,20 @@ export default function ProjectView({ content = [], title }) {
         }
       } catch (error) {
         console.error('Error preloading images:', error);
-      } finally {
         setIsPreloading(false);
+        setShowPreloadIndicator(false);
       }
     };
 
     preloadProjectImages();
-  }, [content, currentIndex, imagePreloader]);
+  }, [content, imagePreloader]); // Removed currentIndex from dependencies
+
+  // Auto-close modal when navigating to non-image content
+  useEffect(() => {
+    if (isImageViewerOpen && currentItem.type !== 'image') {
+      setIsImageViewerOpen(false);
+    }
+  }, [currentIndex, isImageViewerOpen, currentItem.type]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -85,12 +135,22 @@ export default function ProjectView({ content = [], title }) {
       if (currentItem.type === 'game') return;
 
       if (e.key === 'ArrowRight' && currentIndex < content.length - 1) {
+        const newIndex = currentIndex + 1;
         setDirection(1);
-        setCurrentIndex(currentIndex + 1);
+        setCurrentIndex(newIndex);
+        // Close modal if navigating to non-image content
+        if (isImageViewerOpen && content[newIndex].type !== 'image') {
+          setIsImageViewerOpen(false);
+        }
       }
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        const newIndex = currentIndex - 1;
         setDirection(-1);
-        setCurrentIndex(currentIndex - 1);
+        setCurrentIndex(newIndex);
+        // Close modal if navigating to non-image content
+        if (isImageViewerOpen && content[newIndex].type !== 'image') {
+          setIsImageViewerOpen(false);
+        }
       }
       if (e.key === 'Escape' && isImageViewerOpen) {
         setIsImageViewerOpen(false);
@@ -99,7 +159,7 @@ export default function ProjectView({ content = [], title }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, content.length, currentItem.type, isImageViewerOpen]);
+  }, [currentIndex, content.length, currentItem.type, isImageViewerOpen, content]);
 
   // Check if current image is preloaded
   const isCurrentImagePreloaded = currentItem.type === 'image' 
@@ -173,11 +233,19 @@ export default function ProjectView({ content = [], title }) {
         </AnimatePresence>
 
         {/* Advanced preloading indicator */}
-        {isPreloading && (
-          <div className="absolute top-4 right-4 text-xs text-gray-500 z-10">
+        {showPreloadIndicator && (
+          <div className={`absolute top-4 right-4 text-xs z-10 ${
+            preloadCompleted ? 'animate-preload-complete' : ''
+          }`}>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <span>
+              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                preloadCompleted 
+                  ? 'bg-green-500' 
+                  : 'bg-red-500 animate-pulse'
+              }`}></div>
+              <span className={`font-['Press_Start_2P'] transition-all duration-300 ${
+                preloadCompleted ? 'text-green-500' : 'text-gray-500'
+              }`}>
                 Preloading {preloadStats.loaded}/{preloadStats.total} images
               </span>
             </div>
@@ -240,11 +308,11 @@ export default function ProjectView({ content = [], title }) {
       )}
 
       {/* Image Viewer Modal */}
-      {currentItem.type === 'image' && (
+      {isImageViewerOpen && (
         <ImageViewerModal
           isOpen={isImageViewerOpen}
           onClose={() => setIsImageViewerOpen(false)}
-          image={currentItem}
+          image={currentItem.type === 'image' ? currentItem : null}
           imagePreloader={imagePreloader}
           onPrev={() => {
             if (currentIndex > 0) {
@@ -268,6 +336,8 @@ export default function ProjectView({ content = [], title }) {
           }}
           hasPrev={currentIndex > 0}
           hasNext={currentIndex < content.length - 1}
+          currentIndex={currentIndex + 1}
+          totalItems={content.length}
         />
       )}
     </div>

@@ -7,7 +7,7 @@ export const projects = {
           type: 'image',
           src: '/images/Autorretrato/1.jpg',
           alt: 'Autorretrato 1',
-          text:'Photoseries based of precarious selfportrait. Work in conjunction with @latermitta (2024)'
+          text:'Based on selfportrait sculpture. Photowork in conjunction with @latermitta (2024)'
         },
         {
           type: 'image',
@@ -170,7 +170,7 @@ export const projects = {
           type: 'image',
           src: '/images/apropiaciondigifisica/1.JPG',
           alt: 'traducciones 1',
-          text: 'Multimedia installation exploring digital translation and materiality. An internet-sourced 3D scan transitions between physical and virtual states - manifesting as both a 3D printed artifact and an augmented reality presence. The work examines the layers of interpretation between digital and physical realms, questioning authenticity and representation in our hybrid reality. (2024)'
+          text: 'Multimedia installation exploring digital translation and materiality. An internet-sourced 3D scan transitions between physical and virtual states. Manifesting as both a 3D printed artifact and an augmented reality presence. (2024)'
         },
         {
           type: 'image',
@@ -196,7 +196,7 @@ export const projects = {
           type: 'image',
           src: '/images/atencionsargento/1.jpg',
           alt: 'Atención Sargento 1',
-          text: 'Interactive installation where footage from the Gaza conflict remains frozen in time until met by a viewers gaze. The work explores the relationship between witnessing, responsibility, and the mediation of conflict through screens. (2023)'
+          text: 'Interactive installation where footage from the Gaza conflict remains frozen in time until met by a viewers gaze. (2023)'
         },
         {
           type: 'image',
@@ -217,7 +217,7 @@ export const projects = {
           type: 'image',
           src: '/images/Automata1/1.jpg',
           alt: 'Automatoma 1',
-          text: 'Interactive installation where each viewers facial features contribute to an evolving digital portrait. The piece creates a living, composite face that grows more complex with each interaction, questioning ideas of identity and collective consciousness. (2023)'
+          text: 'Interactive installation where each viewers facial features contribute to an evolving digital portrait. (2023)'
         },
         {
           type: 'image',
@@ -243,7 +243,7 @@ export const projects = {
           type: 'image',
           src: '/images/autorretrato3/IMG_7237.JPG',
           alt: 'Autorretrato',
-          text: 'Kinetic sculpture that embraces precariousness. A suspended torso connected to deteriorating machinery produces sound without achieving nothing more than spasms, reflecting on dysfunction the work explores the beauty of decay. (2024)'
+          text: 'Kinetic sculpture. A suspended torso connected to deteriorating machinery produces sound without achieving nothing more than spasms. (2024)'
         },
         {
           type: 'youtube',
@@ -264,7 +264,7 @@ export const projects = {
           type: 'image',
           src: '/images/CuidateFlor/1.JPG',
           alt: 'Cuídate Flor 1',
-          text: 'Interactive installation examining the inherent biases in facial recognition systems. Through a flower pot where digital flowers bloom, the work challenges predetermined categories of human classification, revealing the limitations of algorithmic definitions of identity. (2023)'
+          text: 'Interactive installation examining the inherent biases in facial recognition systems. (2023)'
         },
         {
           type: 'image',
@@ -300,7 +300,7 @@ export const projects = {
           type: 'image',
           src: '/images/para-ti-esto-es-un-juego/1.JPG',
           alt: 'Para Ti 1',
-          text: 'Playful installation where augmented reality markers on balloons create a dynamic space of interaction. Digital stick figures mirror viewers movements while appropriating their facial features, culminating in questions about the boundaries of interactive art and games. (2024)',
+          text: 'Installation where augmented reality markers on balloons create a dynamic space of interaction. Digital stick figures mirror viewers movements while appropriating their facial features. (2024)',
         },
         {
           type: 'image',
@@ -321,7 +321,7 @@ export const projects = {
           type: 'image',
           src: '/images/reparando/1.jpg',
           alt: 'Reparando 1',
-          text: '"Reparando" A critical inquiry into the intersections between the artificial and the organic—the mechanical and the human. (2025)'
+          text: '"Reparando" An inquiry into the intersections between the artificial and the organic—the mechanical and the human. (2025)'
         },
         {
           type: 'image',
@@ -347,7 +347,7 @@ export const projects = {
           type: 'image',
           src: '/images/peristalsis/1.jpg',
           alt: 'Sistemas del Cuerpo 1',
-          text: '(2025)'
+          text: 'Sculptural installation. Based on human condition. (2025)'
         },
         {
           type: 'image',
@@ -383,7 +383,7 @@ export const projects = {
           type: 'image',
           src: '/images/picaro/1.jpg',
           alt: 'Te juro que es primera vez que me pasa 1',
-          text: 'Work in conjunction with Marco Gómez for ExpoWeed 2025.'
+          text: "Interactive installation. Indio Picaro reacts on how hegemonic the spectator's facial features are. Work in conjunction with Marco Gómez. (2025)"
         },
         {
           type: 'image',

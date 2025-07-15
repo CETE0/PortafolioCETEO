@@ -83,3 +83,35 @@
 .perspective-1000 {
   perspective: 1000px;
 }
+
+/* Preloading completion animation */
+@keyframes preloadComplete {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  20% { 
+    opacity: 1; 
+    transform: scale(1.1);
+  }
+  40% { 
+    opacity: 0.7; 
+    transform: scale(1);
+  }
+  60% { 
+    opacity: 1; 
+    transform: scale(1.05);
+  }
+  80% { 
+    opacity: 0.8; 
+    transform: scale(1);
+  }
+  100% { 
+    opacity: 0; 
+    transform: scale(0.95);
+  }
+}
+
+.animate-preload-complete {
+  animation: preloadComplete 1.5s ease-out forwards;
+}

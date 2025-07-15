@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const [activeCategory, setActiveCategory] = useState('photography');
+  const [activeCategory, setActiveCategory] = useState('artworks');
 
   const categories = {
     artworks: {

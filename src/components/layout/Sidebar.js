@@ -53,10 +53,10 @@ const Sidebar = () => {
   };
 
   return (
-    <nav className="h-screen w-full bg-white p-6 border-r border-white overflow-y-auto relative flex flex-col justify-between">
+    <nav className="h-screen w-full bg-white px-8 pb-6 pt-24 md:p-6 md:pt-6 border-r border-white overflow-y-auto flex flex-col items-center justify-center md:items-start md:justify-between">
       <div>
-        {/* Header */}
-        <div className="mb-8 pt-12 md:pt-0">
+        {/* Header (hidden on mobile) */}
+        <div className="hidden md:block mb-8">
           <Link href="/" className="block">
             <h1 className="text-xl font-bold text-red-600">CETEO</h1>
             <p className="text-sm text-gray-600">new?-media artist</p>
@@ -64,12 +64,12 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation */}
-        <div className="space-y-6">
+        <div className="space-y-8 md:space-y-4 w-full flex flex-col items-center md:items-start">
           {Object.entries(categories).map(([key, category]) => (
             <div key={key} className="space-y-2">
               <button
                 onClick={() => setActiveCategory(key)}
-                className={`text-sm font-medium ${
+                className={`block w-full text-center md:text-left text-sm font-medium ${
                   activeCategory === key ? 'text-red-500' : 'text-gray-900'
                 }`}
               >
@@ -77,12 +77,12 @@ const Sidebar = () => {
               </button>
               
               {activeCategory === key && (
-                <div className="ml-4 space-y-1">
+                <div className={`space-y-1 transition-all duration-300 w-full flex flex-col items-center md:items-start ${activeCategory === key ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}` }>
                   {category.projects.map((project) => (
                     <Link
                       key={project}
                       href={`/${key}/${project}`}
-                      className={`block text-sm ${
+                      className={`block text-sm text-center md:text-left ${
                         pathname === `/${key}/${project}`
                           ? 'text-red-500'
                           : 'text-gray-600 hover:text-gray-900'
@@ -91,8 +91,12 @@ const Sidebar = () => {
                         // Close mobile menu when a link is clicked
                         const sidebar = document.getElementById('mobile-sidebar');
                         if (sidebar) {
-                          sidebar.classList.add('-translate-x-full');
+                          sidebar.classList.add('translate-x-full');
                           sidebar.classList.remove('translate-x-0');
+                        }
+                        // Notify MobileMenu to reset state
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new Event('sidebarClosed'));
                         }
                       }}
                     >
@@ -104,19 +108,19 @@ const Sidebar = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Contact Link */}
-      <div>
+        {/* Contact Link */}
         <Link
           href="/contact"
-          className="block text-sm text-gray-600 hover:text-gray-900 mb-6 md:mb-0 md:absolute md:bottom-6"
+          className="block text-sm text-gray-600 hover:text-gray-900 text-center mt-8 md:mt-0 md:absolute md:bottom-6 md:left-8"
           onClick={() => {
             // Close mobile menu when contact link is clicked
             const sidebar = document.getElementById('mobile-sidebar');
             if (sidebar) {
-              sidebar.classList.add('-translate-x-full');
+              sidebar.classList.add('translate-x-full');
               sidebar.classList.remove('translate-x-0');
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('sidebarClosed'));
             }
           }}
         >

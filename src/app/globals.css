@@ -115,3 +115,70 @@
 .animate-preload-complete {
   animation: preloadComplete 1.5s ease-out forwards;
 }
+
+.custom-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 10000;
+  display: none; /* Hidden by default */
+}
+
+.crosshair {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s ease-out;
+}
+
+.custom-cursor.clicked .crosshair {
+  transform: rotate(180deg);
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: '';
+  position: absolute;
+  background-color: black;
+  transition: background-color 0.2s ease;
+}
+
+/* Vertical line */
+.crosshair::before {
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+/* Horizontal line */
+.crosshair::after {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.custom-cursor.hover .crosshair::before,
+.custom-cursor.hover .crosshair::after {
+  background-color: red;
+}
+
+/* Show custom cursor and hide default on devices that can hover (i.e. not touch) */
+@media (hover: hover) and (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  .custom-cursor {
+    display: block;
+  }
+  a,
+  button,
+  [role="button"],
+  .cursor-pointer {
+    cursor: none;
+  }
+}

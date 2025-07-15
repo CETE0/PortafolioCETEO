@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getOptimizedImageUrl } from '../../lib/cloudinary';
+import OptimizedImage from './OptimizedImage';
 import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
@@ -64,21 +63,18 @@ export default function ProjectView({ content = [], title }) {
       case 'image':
         return (
           <div className="relative w-full h-full flex items-center justify-center bg-white">
-            <div 
-              className="relative cursor-pointer"
+            <OptimizedImage
+              src={currentItem.src}
+              alt={currentItem.alt || ''}
+              context="gallery"
               onClick={() => setIsImageViewerOpen(true)}
-            >
-              <Image
-                src={getOptimizedImageUrl(currentItem.src, { width: 1600, height: 1200, quality: 85 })}
-                alt={currentItem.alt || ''}
-                width={6240}
-                height={4160}
-                className="w-auto h-auto object-contain"
-                style={{ maxHeight: 'calc(100vh - 120px)' }}
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 70vw"
-                priority={currentIndex === 0}
-              />
-            </div>
+              priority={currentIndex === 0}
+              fillContainer={true}
+              containerStyle={{
+                maxHeight: 'calc(100vh - 200px)',
+                padding: '1rem'
+              }}
+            />
           </div>
         );
       case 'youtube':

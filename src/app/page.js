@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import OptimizedImage from '../components/layout/OptimizedImage';
 import { getOptimizedImageUrl } from '../lib/cloudinary';
 
 const projectImages = [
@@ -83,18 +83,18 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <Image
-        src={getOptimizedImageUrl(url, { width: 1200, height: 900, quality: 85 })}
+      <OptimizedImage
+        src={url}
         alt="Background"
-        fill
-        className="object-cover opacity-0 transition-opacity duration-300"
-        priority
-        quality={90}
-        sizes="100vw"
-        loading="eager"
-        onLoad={(e) => {
-          e.target.classList.remove('opacity-0');
-          e.target.classList.add('opacity-100');
+        context="hero"
+        priority={true}
+        fillContainer={true}
+        containerStyle={{
+          width: '100%',
+          height: '100%'
+        }}
+        imageStyle={{
+          objectFit: 'cover'
         }}
       />
     </motion.div>
@@ -102,39 +102,75 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
 };
 
 export default function Home() {
-  const [legFrame, setLegFrame] = useState(0);
-  const [fallFrame, setFallFrame] = useState(0);
-  const [isLegAnimating, setIsLegAnimating] = useState(false);
-  const [isFalling, setIsFalling] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [canKick, setCanKick] = useState(true);
-  const [backgroundUrl, setBackgroundUrl] = useState('');
-  const [firstKickDone, setFirstKickDone] = useState(false);
-  const [showStart, setShowStart] = useState(false);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isHit, setIsHit] = useState(false);
-
+  const [gameStarted, setGameStarted] = useState(false);
+  const [showStart, setShowStart] = useState(false);
+  const [isLegAnimating, setIsLegAnimating] = useState(false);
+  const [legFrame, setLegFrame] = useState(0);
+  const [isFalling, setIsFalling] = useState(false);
+  const [fallFrame, setFallFrame] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [backgroundUrl, setBackgroundUrl] = useState('');
+  const [canKick, setCanKick] = useState(true);
+  const [firstKickDone, setFirstKickDone] = useState(false);
+  
   const backgroundMusicRef = useRef(null);
   const kickSoundRef = useRef(null);
   const nextImageSoundRef = useRef(null);
+  const preloadedImagesRef = useRef(new Set());
 
-  const FRAME_DURATION = 200;
-  const LEG_FRAMES = 12;
+  const FRAME_DURATION = 50;
+  const LEG_FRAMES = 14;
   const FALL_FRAMES = 5;
 
-  useEffect(() => {
-    backgroundMusicRef.current = new Audio('/sounds/background-loop.mp3');
-    kickSoundRef.current = new Audio('/sounds/kick.mp3');
-    nextImageSoundRef.current = new Audio('/sounds/next.mp3');
+  const cleanupAudio = () => {
+    [backgroundMusicRef, kickSoundRef, nextImageSoundRef].forEach(ref => {
+      if (ref.current) {
+        ref.current.pause();
+        ref.current.currentTime = 0;
+        ref.current.load();
+      }
+    });
+  };
 
-    if (backgroundMusicRef.current) {
-      backgroundMusicRef.current.loop = true;
-      backgroundMusicRef.current.volume = 0.3;
-    }
+  useEffect(() => {
+    let audioInitialized = false;
+    
+    const initAudio = () => {
+      if (audioInitialized) return;
+      
+      try {
+        backgroundMusicRef.current = new Audio('/sounds/background-loop.mp3');
+        kickSoundRef.current = new Audio('/sounds/kick.mp3');
+        nextImageSoundRef.current = new Audio('/sounds/next.mp3');
+
+        if (backgroundMusicRef.current) {
+          backgroundMusicRef.current.loop = true;
+          backgroundMusicRef.current.volume = 0.3;
+          backgroundMusicRef.current.preload = 'auto';
+        }
+        
+        audioInitialized = true;
+      } catch (error) {
+        console.warn('Audio initialization failed:', error);
+      }
+    };
+
+    const handleUserInteraction = () => {
+      initAudio();
+    };
+
+    ['click', 'touchstart', 'keydown'].forEach(event => {
+      document.addEventListener(event, handleUserInteraction, { once: true });
+    });
 
     return () => {
-      if (backgroundMusicRef.current) backgroundMusicRef.current.pause();
+      cleanupAudio();
+      ['click', 'touchstart', 'keydown'].forEach(event => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
     };
   }, []);
 
@@ -149,34 +185,36 @@ export default function Home() {
 
     // Preload critical images with higher priority
     criticalImages.forEach(src => {
-      const img = new window.Image();
-      img.src = src;
-      img.fetchPriority = 'high';
+      if (!preloadedImagesRef.current.has(src)) {
+        const img = new window.Image();
+        img.src = src;
+        img.fetchPriority = 'high';
+        preloadedImagesRef.current.add(src);
+      }
     });
 
-    // Preload a single random portfolio image (low priority) so the first kick feels instant
+    // Preload a single random portfolio image (low priority)
     const firstImgSrc = projectImages[Math.floor(Math.random() * projectImages.length)];
-    const firstPortfolioImg = new window.Image();
-    firstPortfolioImg.src = getOptimizedImageUrl(firstImgSrc, { width: 800, height: 600, quality: 75 });
-    firstPortfolioImg.fetchPriority = 'low';
+    if (!preloadedImagesRef.current.has(firstImgSrc)) {
+      const firstPortfolioImg = new window.Image();
+      firstPortfolioImg.src = getOptimizedImageUrl(firstImgSrc, { width: 800, height: 600, quality: 75 });
+      firstPortfolioImg.fetchPriority = 'low';
+      preloadedImagesRef.current.add(firstImgSrc);
+    }
 
-    // Defer the rest of the heavy assets (extra frames & sounds) until the browser is idle
+    // Defer the rest of the heavy assets until browser is idle
     const preloadRest = () => {
       const plinthFrames = [2, 3, 4, 5].map(i => `/images/game/plinth/${i}.png`);
       const objectFrames = [2, 3, 4, 5].map(i => `/images/game/object/${i}.png`);
       const legFrames = Array.from({ length: 11 }, (_, i) => `/images/game/leg/${i + 2}.png`);
     
       [...plinthFrames, ...objectFrames, ...legFrames].forEach(src => {
-      const img = new window.Image();
-      img.src = src;
-    });
-
-      // Non-blocking preload of audio assets
-    ['/sounds/background-loop.mp3', '/sounds/kick.mp3', '/sounds/next.mp3'].forEach(src => {
-      const audio = new window.Audio();
-      audio.src = src;
-      audio.preload = 'auto';
-    });
+        if (!preloadedImagesRef.current.has(src)) {
+          const img = new window.Image();
+          img.src = src;
+          preloadedImagesRef.current.add(src);
+        }
+      });
     };
 
     if ('requestIdleCallback' in window) {
@@ -184,6 +222,11 @@ export default function Home() {
     } else {
       setTimeout(preloadRest, 1500);
     }
+
+    // Cleanup preloaded images on unmount
+    return () => {
+      preloadedImagesRef.current.clear();
+    };
   }, []);
 
   const getRandomImage = () => {
@@ -258,7 +301,6 @@ export default function Home() {
   }, [isFalling]);
 
   const handleGameAreaClick = () => {
-    // Only allow interaction if the game has started or if we're showing the start UI
     if (!gameStarted && !showStart) return;
     
     if (!gameStarted) {
@@ -270,11 +312,9 @@ export default function Home() {
     }
   };
 
-  // Add a new effect to handle initial animation timing
   useEffect(() => {
     const startInitialAnimation = () => {
       if (!gameStarted && !isLegAnimating && !isFalling && !firstKickDone) {
-        // Small delay to ensure assets are loaded
         const timer = setTimeout(() => {
           startAnimation();
         }, 100);
@@ -282,9 +322,9 @@ export default function Home() {
       }
     };
 
-    // Start the initial animation immediately
-    startInitialAnimation();
-  }, [gameStarted, isLegAnimating, isFalling, firstKickDone]);
+    const timer = setTimeout(startInitialAnimation, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-white">
@@ -320,22 +360,28 @@ export default function Home() {
             <>
               {/* Plinth */}
               <div className="absolute inset-0">
-                <Image
+                <OptimizedImage
                   src={`/images/game/plinth/${isFalling ? fallFrame + 1 : 1}.png`}
                   alt="Plinth"
-                  fill
-                  className="object-contain"
-                  priority
+                  context="hero"
+                  priority={true}
+                  fillContainer={true}
+                  imageStyle={{
+                    objectFit: 'contain'
+                  }}
                 />
               </div>
               {/* Object */}
               <div className="absolute inset-0">
-                <Image
+                <OptimizedImage
                   src={`/images/game/object/${isFalling ? fallFrame + 1 : 1}.png`}
                   alt="Object"
-                  fill
-                  className="object-contain"
-                  priority
+                  context="hero"
+                  priority={true}
+                  fillContainer={true}
+                  imageStyle={{
+                    objectFit: 'contain'
+                  }}
                 />
               </div>
             </>
@@ -343,12 +389,15 @@ export default function Home() {
           {/* Leg */}
           {isLegAnimating && (
             <div className={`absolute inset-0 ${isFlipped ? 'scale-x-[-1]' : ''}`}>
-              <Image
+              <OptimizedImage
                 src={`/images/game/leg/${legFrame + 1}.png`}
                 alt="Leg"
-                fill
-                className="object-contain"
-                priority
+                context="hero"
+                priority={true}
+                fillContainer={true}
+                imageStyle={{
+                  objectFit: 'contain'
+                }}
               />
             </div>
           )}

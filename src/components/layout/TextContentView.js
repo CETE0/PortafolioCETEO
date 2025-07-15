@@ -2,8 +2,7 @@
 
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import Image from 'next/image'; 
-import { getOptimizedImageUrl } from '../../lib/cloudinary';
+import OptimizedImage from './OptimizedImage';
 
 export default function TextContentView({ content }) {
   if (!content) return null;
@@ -36,24 +35,16 @@ export default function TextContentView({ content }) {
 
       {content.images?.map((image, index) => (
         <figure key={index} className="my-8">
-          <div className="relative w-full h-auto">
-            <Image
-              src={getOptimizedImageUrl(image.src, { width: 800, height: 500, quality: 80 })}
-              alt={image.alt}
-              width={800}
-              height={500}
-              className="w-full h-auto opacity-0 transition-opacity duration-300"
-              loading="lazy"
-              quality={80}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-              placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qLjgyPj4+Oj5CQkJCQkJCQkJCQkJCQkJCQkJCQkL/2wBDAR4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-              onLoadingComplete={(img) => {
-                img.classList.remove('opacity-0');
-                img.classList.add('opacity-100');
-              }}
-            />
-          </div>
+          <OptimizedImage
+            src={image.src}
+            alt={image.alt}
+            context="gallery"
+            priority={index === 0}
+            containerStyle={{
+              marginBottom: '1rem',
+              maxWidth: '100%'
+            }}
+          />
           {image.caption && (
             <figcaption className="mt-2 text-sm text-black/70 text-center">
               {image.caption}

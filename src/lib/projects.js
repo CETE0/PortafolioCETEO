@@ -2,7 +2,7 @@ export const projects = {
   photography: {
     'yofelia': {
       title: 'autorretrato',
-      images: [
+      content: [
         {
           type: 'image',
           src: '/images/Autorretrato/1.jpg',
@@ -191,7 +191,7 @@ export const projects = {
     },
     'atento-sargento': {
       title: 'Atención Sargento',
-      images: [
+      content: [
         {
           type: 'image',
           src: '/images/atencionsargento/1.jpg',
@@ -427,6 +427,6 @@ export function getProjectContent(category, projectId) {
     ...project,
     category,
     projectId,
-    content: project.images || project.content || [] 
+    content: project.content || [] 
   };
 }

@@ -669,31 +669,104 @@ export class ThreeGame {
   
     dispose() {
       this.isActive = false;
+      
+      // Cleanup event listeners
       if (this.cleanup) {
         this.cleanup();
       }
-      if (this.renderer) {
-        this.renderer.dispose();
-      }
+      
+      // Remove visibility change listener
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      
+      // Stop and cleanup audio
       if (this.audioManager) {
         this.audioManager.stopAll();
+        this.audioManager.dispose?.();
       }
+      
+      // Cleanup enemies
       this.enemies.forEach(enemy => {
         enemy.dispose();
       });
+      this.enemies = [];
+      
+      // Cleanup kickable objects
       this.kickableObjects.forEach(obj => {
         obj.dispose();
       });
+      this.kickableObjects = [];
+      
+      // Cleanup impact marks
       this.impactMarks.forEach(mark => {
         if (mark.material) {
           mark.material.dispose();
         }
+        if (mark.geometry) {
+          mark.geometry.dispose();
+        }
         this.scene.remove(mark);
       });
-      if (this.renderer && this.renderer.domElement && this.renderer.domElement.parentNode) {
-        this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+      this.impactMarks = [];
+      
+      // Cleanup textures
+      if (this.textureLoader) {
+        this.textureLoader = null;
       }
-      window.removeEventListener('resize', this.onWindowResize.bind(this));
-      this.ui.dispose();
+      
+      // Cleanup controls
+      if (this.controls) {
+        this.controls.dispose();
+        this.controls = null;
+      }
+      
+      // Cleanup renderer
+      if (this.renderer) {
+        this.renderer.dispose();
+        this.renderer.forceContextLoss();
+        this.renderer.domElement = null;
+        this.renderer = null;
+      }
+      
+      // Remove DOM element
+      if (this.container && this.container.firstChild) {
+        this.container.removeChild(this.container.firstChild);
+      }
+      
+      // Cleanup scene
+      if (this.scene) {
+        this.scene.traverse((child) => {
+          if (child.geometry) {
+            child.geometry.dispose();
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(material => material.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+        this.scene.clear();
+        this.scene = null;
+      }
+      
+      // Cleanup camera
+      this.camera = null;
+      
+      // Remove window resize listener
+      window.removeEventListener('resize', this.onWindowResize);
+      
+      // Cleanup UI
+      if (this.ui) {
+        this.ui.dispose();
+        this.ui = null;
+      }
+      
+      // Clear references
+      this.container = null;
+      this.playerBoundingBox = null;
+      this.wallBoundingBoxes = [];
+      this.lastSafePosition = null;
+      this.kickAnimation = null;
     }
   }

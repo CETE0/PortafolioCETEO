@@ -18,10 +18,12 @@ export default function OptimizedImage({
   maxWidth,
   maxHeight,
   className = '',
+  isPreloaded = false,
   ...props
 }) {
   const [imageError, setImageError] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  const [isLoading, setIsLoading] = useState(!isPreloaded);
 
   // Obtener opciones optimizadas para el contexto
   const optimizedOptions = getOptimizedOptions(context, customOptions);
@@ -48,6 +50,14 @@ export default function OptimizedImage({
     img.src = optimizedSrc;
   }, [optimizedSrc]);
 
+  // Handle preloaded state
+  useEffect(() => {
+    if (isPreloaded) {
+      setIsLoading(false);
+      setImageError(false);
+    }
+  }, [isPreloaded]);
+
   // Calcular aspecto ratio
   const aspectRatio = imageDimensions.width && imageDimensions.height 
     ? imageDimensions.width / imageDimensions.height 
@@ -61,7 +71,7 @@ export default function OptimizedImage({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'white',
+      backgroundColor: context === 'modal' ? 'transparent' : 'white',
       ...containerStyle
     };
 
@@ -108,6 +118,7 @@ export default function OptimizedImage({
   // Estilos de la imagen
   const getImageStyles = () => {
     const baseStyles = {
+      transition: isLoading ? 'none' : 'opacity 0.3s ease-in-out',
       ...imageStyle
     };
 
@@ -130,8 +141,15 @@ export default function OptimizedImage({
     };
   };
 
+  // Manejar carga de imagen
+  const handleLoad = () => {
+    setIsLoading(false);
+    setImageError(false);
+  };
+
   // Manejar error de imagen
   const handleError = () => {
+    setIsLoading(false);
     setImageError(true);
   };
 
@@ -142,7 +160,7 @@ export default function OptimizedImage({
     return (
       <div 
         style={getContainerStyles()}
-        className={`bg-white flex items-center justify-center ${className}`}
+        className={`flex items-center justify-center ${className}`}
       >
         <div className="text-center text-gray-500">
           <p className="text-sm">Error al cargar imagen</p>
@@ -157,17 +175,25 @@ export default function OptimizedImage({
       className={`${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >
+      {/* Loading indicator for non-preloaded images */}
+      {isLoading && !isPreloaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+        </div>
+      )}
+      
       <Image
         src={optimizedSrc}
         alt={alt}
         width={optimizedOptions.width}
         height={optimizedOptions.height}
         style={getImageStyles()}
-        priority={priority}
+        priority={priority || isPreloaded}
         quality={optimizedOptions.quality}
         sizes={responsiveSizes}
         placeholder="blur"
         blurDataURL={blurDataURL}
+        onLoad={handleLoad}
         onError={handleError}
         {...props}
       />

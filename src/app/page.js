@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import OptimizedImage from '../components/layout/OptimizedImage';
 import { getOptimizedImageUrl } from '../lib/cloudinary';
 
@@ -34,6 +35,14 @@ const projectImages = [
   '/images/para-ti-esto-es-un-juego/2.JPG',
   '/images/autorretrato3/IMG_7237.JPG',
 ];
+
+// Animation assets - these need to be loaded directly for performance
+const ANIMATION_ASSETS = {
+  background: '/images/game/background.png',
+  plinth: Array.from({ length: 5 }, (_, i) => `/images/game/plinth/${i + 1}.png`),
+  object: Array.from({ length: 5 }, (_, i) => `/images/game/object/${i + 1}.png`),
+  leg: Array.from({ length: 14 }, (_, i) => `/images/game/leg/${i + 1}.png`),
+};
 
 const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
   if (isGameImage) {
@@ -101,6 +110,23 @@ const BackgroundImage = ({ url, shouldAnimate, isGameImage, isHit }) => {
   );
 };
 
+// Optimized animation image component
+const AnimationImage = ({ src, alt, className = '', style = {} }) => {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className={`object-contain ${className}`}
+      style={style}
+      priority={true}
+      quality={90}
+      sizes="100vw"
+      loading="eager"
+    />
+  );
+};
+
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -115,13 +141,17 @@ export default function Home() {
   const [backgroundUrl, setBackgroundUrl] = useState('');
   const [canKick, setCanKick] = useState(true);
   const [firstKickDone, setFirstKickDone] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   
   const backgroundMusicRef = useRef(null);
   const kickSoundRef = useRef(null);
   const nextImageSoundRef = useRef(null);
   const preloadedImagesRef = useRef(new Set());
+  const animationAssetsRef = useRef(new Map());
 
-  const FRAME_DURATION = 50;
+  const FRAME_DURATION = 80;
   const LEG_FRAMES = 14;
   const FALL_FRAMES = 5;
 
@@ -135,7 +165,74 @@ export default function Home() {
     });
   };
 
+  // Preload animation assets with progress tracking
   useEffect(() => {
+    const preloadAnimationAssets = async () => {
+      const allAssets = [
+        ANIMATION_ASSETS.background,
+        ...ANIMATION_ASSETS.plinth,
+        ...ANIMATION_ASSETS.object,
+        ...ANIMATION_ASSETS.leg,
+      ];
+
+      let loaded = 0;
+      const total = allAssets.length;
+      setLoadingProgress(0);
+
+      const loadPromises = allAssets.map(src => 
+        new Promise((resolve) => {
+          if (animationAssetsRef.current.has(src)) {
+            loaded++;
+            setLoadingProgress((loaded / total) * 100);
+            resolve();
+            return;
+          }
+
+          const img = new window.Image();
+          img.onload = () => {
+            animationAssetsRef.current.set(src, img);
+            loaded++;
+            setLoadingProgress((loaded / total) * 100);
+            resolve();
+          };
+          img.onerror = () => {
+            console.warn(`Failed to load animation asset: ${src}`);
+            loaded++;
+            setLoadingProgress((loaded / total) * 100);
+            resolve();
+          };
+          img.src = src;
+        })
+      );
+
+      await Promise.all(loadPromises);
+      
+      // Ensure all critical assets are loaded
+      const criticalAssetsLoaded = animationAssetsRef.current.has(ANIMATION_ASSETS.background) &&
+                                  animationAssetsRef.current.has(ANIMATION_ASSETS.plinth[0]) &&
+                                  animationAssetsRef.current.has(ANIMATION_ASSETS.object[0]) &&
+                                  animationAssetsRef.current.has(ANIMATION_ASSETS.leg[0]);
+      
+      if (criticalAssetsLoaded) {
+        setAssetsLoaded(true);
+        setTimeout(() => {
+          setIsInitialLoading(false);
+        }, 300);
+      } else {
+        // If critical assets failed, still proceed but log warning
+        console.warn('Some critical animation assets failed to load');
+        setAssetsLoaded(true);
+        setIsInitialLoading(false);
+      }
+    };
+
+    preloadAnimationAssets();
+  }, []);
+
+  // Audio initialization
+  useEffect(() => {
+    if (isInitialLoading) return;
+    
     let audioInitialized = false;
     
     const initAudio = () => {
@@ -172,72 +269,60 @@ export default function Home() {
         document.removeEventListener(event, handleUserInteraction);
       });
     };
-  }, []);
+  }, [isInitialLoading]);
 
+  // Secondary preloading for portfolio images
   useEffect(() => {
-    // Preload critical animation images first
-    const criticalImages = [
-      '/images/game/background.png',
-      '/images/game/plinth/1.png',
-      '/images/game/object/1.png',
-      '/images/game/leg/1.png'
-    ];
+    if (isInitialLoading || !assetsLoaded) return;
 
-    // Preload critical images with higher priority
-    criticalImages.forEach(src => {
-      if (!preloadedImagesRef.current.has(src)) {
-        const img = new window.Image();
-        img.src = src;
-        img.fetchPriority = 'high';
-        preloadedImagesRef.current.add(src);
-      }
-    });
-
-    // Preload a single random portfolio image (low priority)
-    const firstImgSrc = projectImages[Math.floor(Math.random() * projectImages.length)];
-    if (!preloadedImagesRef.current.has(firstImgSrc)) {
-      const firstPortfolioImg = new window.Image();
-      firstPortfolioImg.src = getOptimizedImageUrl(firstImgSrc, { width: 800, height: 600, quality: 75 });
-      firstPortfolioImg.fetchPriority = 'low';
-      preloadedImagesRef.current.add(firstImgSrc);
-    }
-
-    // Defer the rest of the heavy assets until browser is idle
-    const preloadRest = () => {
-      const plinthFrames = [2, 3, 4, 5].map(i => `/images/game/plinth/${i}.png`);
-      const objectFrames = [2, 3, 4, 5].map(i => `/images/game/object/${i}.png`);
-      const legFrames = Array.from({ length: 11 }, (_, i) => `/images/game/leg/${i + 2}.png`);
-    
-      [...plinthFrames, ...objectFrames, ...legFrames].forEach(src => {
+    const preloadPortfolioImages = () => {
+      // Preload first few portfolio images
+      const firstImages = projectImages.slice(0, 5);
+      
+      firstImages.forEach(src => {
         if (!preloadedImagesRef.current.has(src)) {
+          const optimizedUrl = getOptimizedImageUrl(src, { width: 800, height: 600, quality: 75 });
           const img = new window.Image();
-          img.src = src;
-          preloadedImagesRef.current.add(src);
+          img.onload = () => preloadedImagesRef.current.add(src);
+          img.src = optimizedUrl;
         }
       });
+
+      // Preload remaining images with lower priority
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          const remainingImages = projectImages.slice(5);
+          remainingImages.forEach(src => {
+            if (!preloadedImagesRef.current.has(src)) {
+              const optimizedUrl = getOptimizedImageUrl(src, { width: 800, height: 600, quality: 75 });
+              const img = new window.Image();
+              img.onload = () => preloadedImagesRef.current.add(src);
+              img.src = optimizedUrl;
+            }
+          });
+        });
+      }
     };
 
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(preloadRest);
-    } else {
-      setTimeout(preloadRest, 1500);
-    }
+    preloadPortfolioImages();
 
-    // Cleanup preloaded images on unmount
     return () => {
       preloadedImagesRef.current.clear();
     };
-  }, []);
+  }, [isInitialLoading, assetsLoaded]);
 
   const getRandomImage = () => {
     const randomIndex = Math.floor(Math.random() * projectImages.length);
     const selectedImage = projectImages[randomIndex];
     setBackgroundUrl(selectedImage);
-    if (nextImageSoundRef.current) nextImageSoundRef.current.play();
+    if (nextImageSoundRef.current) {
+      nextImageSoundRef.current.currentTime = 0;
+      nextImageSoundRef.current.play().catch(e => console.warn('Audio play failed:', e));
+    }
   };
 
   const startAnimation = () => {
-    if (!canKick) return;
+    if (!canKick || !assetsLoaded) return;
     
     setCanKick(false);
     setLegFrame(0);
@@ -270,7 +355,10 @@ export default function Home() {
         if (prev === 7) {
           setIsFalling(true);
           setIsHit(true);
-          if (kickSoundRef.current) kickSoundRef.current.play();
+          if (kickSoundRef.current) {
+            kickSoundRef.current.currentTime = 0;
+            kickSoundRef.current.play().catch(e => console.warn('Audio play failed:', e));
+          }
           shouldIncreaseScore = true;
           setTimeout(() => setIsHit(false), 200);
         }
@@ -281,7 +369,7 @@ export default function Home() {
 
   useEffect(() => {
     if (gameStarted && backgroundMusicRef.current) {
-      backgroundMusicRef.current.play();
+      backgroundMusicRef.current.play().catch(e => console.warn('Audio play failed:', e));
     }
   }, [gameStarted]);
 
@@ -312,19 +400,46 @@ export default function Home() {
     }
   };
 
+  // Auto-start initial animation
   useEffect(() => {
+    if (isInitialLoading || !assetsLoaded) return;
+    
     const startInitialAnimation = () => {
       if (!gameStarted && !isLegAnimating && !isFalling && !firstKickDone) {
         const timer = setTimeout(() => {
           startAnimation();
-        }, 100);
+        }, 500);
         return () => clearTimeout(timer);
       }
     };
 
     const timer = setTimeout(startInitialAnimation, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isInitialLoading, assetsLoaded]);
+
+  // Show loading screen while assets are loading
+  if (isInitialLoading) {
+    return (
+      <div className="relative min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="relative w-full max-w-4xl aspect-[4/3] flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-black font-['Press_Start_2P'] text-lg mb-4">
+              Loading Assets...
+            </div>
+            <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-red-600 transition-all duration-300"
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+            <div className="text-black font-['Press_Start_2P'] text-xs mt-2">
+              {Math.round(loadingProgress)}%
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-white">
@@ -345,63 +460,55 @@ export default function Home() {
                 isHit={isHit}
               />
             ) : (
-              <BackgroundImage
+              <motion.div
                 key="initial-bg"
-                url="/images/game/background.png"
-                shouldAnimate={false}
-                isGameImage={false}
-              />
+                className="absolute inset-0"
+                initial={false}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AnimationImage
+                  src={ANIMATION_ASSETS.background}
+                  alt="Background"
+                />
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
+        
         {/* Game Elements */}
         <div className="absolute inset-0 z-10">
-          {!gameStarted && (
+          {!gameStarted && assetsLoaded && (
             <>
               {/* Plinth */}
               <div className="absolute inset-0">
-                <OptimizedImage
-                  src={`/images/game/plinth/${isFalling ? fallFrame + 1 : 1}.png`}
+                <AnimationImage
+                  src={ANIMATION_ASSETS.plinth[isFalling ? Math.min(fallFrame, FALL_FRAMES - 1) : 0]}
                   alt="Plinth"
-                  context="hero"
-                  priority={true}
-                  fillContainer={true}
-                  imageStyle={{
-                    objectFit: 'contain'
-                  }}
                 />
               </div>
               {/* Object */}
               <div className="absolute inset-0">
-                <OptimizedImage
-                  src={`/images/game/object/${isFalling ? fallFrame + 1 : 1}.png`}
+                <AnimationImage
+                  src={ANIMATION_ASSETS.object[isFalling ? Math.min(fallFrame, FALL_FRAMES - 1) : 0]}
                   alt="Object"
-                  context="hero"
-                  priority={true}
-                  fillContainer={true}
-                  imageStyle={{
-                    objectFit: 'contain'
-                  }}
                 />
               </div>
             </>
           )}
-          {/* Leg */}
-          {isLegAnimating && (
+          
+          {/* Leg Animation */}
+          {isLegAnimating && assetsLoaded && (
             <div className={`absolute inset-0 ${isFlipped ? 'scale-x-[-1]' : ''}`}>
-              <OptimizedImage
-                src={`/images/game/leg/${legFrame + 1}.png`}
+              <AnimationImage
+                src={ANIMATION_ASSETS.leg[Math.min(legFrame, LEG_FRAMES - 1)]}
                 alt="Leg"
-                context="hero"
-                priority={true}
-                fillContainer={true}
-                imageStyle={{
-                  objectFit: 'contain'
-                }}
               />
             </div>
           )}
         </div>
+        
         {/* UI overlay (start text) */}
         <div className="absolute inset-0 z-20 pointer-events-none">
           {showStart && (
@@ -413,13 +520,14 @@ export default function Home() {
           )}
         </div>
       </div>
-      {/* UI text now below the image */}
+      
+      {/* UI text below the image */}
       <div className="w-full flex justify-center gap-4 font-['Press_Start_2P'] text-sm mt-4">
         {!gameStarted && (
-          <span className="text-red-600 ">[tap/click to start]</span>
+          <span className="text-red-600">[tap/click to start]</span>
         )}
         {gameStarted && (
-          <span className="text-red-600 ">shoot em' up     [score:{score}]</span>
+          <span className="text-red-600">shoot em' up     [score:{score}]</span>
         )}
       </div>
     </div>

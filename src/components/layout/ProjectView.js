@@ -8,6 +8,7 @@ import YouTubePlayer from './YouTubePlayer';
 import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
 import ImageViewerModal from './ImageViewerModal';
+import { useImagePreloader } from '../../lib/imagePreloader';
 
 const KickGame = dynamic(() => import('../games/KickGame'), {
   ssr: false,
@@ -22,6 +23,10 @@ export default function ProjectView({ content = [], title }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [isPreloading, setIsPreloading] = useState(false);
+  const [preloadStats, setPreloadStats] = useState({ loaded: 0, total: 0 });
+  
+  const imagePreloader = useImagePreloader();
 
   if (!content || content.length === 0) {
     return (
@@ -32,6 +37,46 @@ export default function ProjectView({ content = [], title }) {
   }
 
   const currentItem = content[currentIndex];
+
+  // Advanced preloading with priority system
+  useEffect(() => {
+    const preloadProjectImages = async () => {
+      setIsPreloading(true);
+      
+      // Get all image items from content
+      const imageItems = content.filter(item => item.type === 'image');
+      
+      if (imageItems.length === 0) {
+        setIsPreloading(false);
+        return;
+      }
+
+      setPreloadStats({ loaded: 0, total: imageItems.length });
+
+      try {
+        // Use the advanced preloader with priority system
+        const results = await imagePreloader.preloadWithPriority(imageItems, currentIndex);
+        
+        // Count successful loads
+        const successfulLoads = results.filter(result => 
+          result.status === 'fulfilled' && result.value.status === 'loaded'
+        ).length;
+        
+        setPreloadStats({ loaded: successfulLoads, total: imageItems.length });
+        
+        // Log cache stats for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Image preloader stats:', imagePreloader.getCacheStats());
+        }
+      } catch (error) {
+        console.error('Error preloading images:', error);
+      } finally {
+        setIsPreloading(false);
+      }
+    };
+
+    preloadProjectImages();
+  }, [content, currentIndex, imagePreloader]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -56,6 +101,11 @@ export default function ProjectView({ content = [], title }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, content.length, currentItem.type, isImageViewerOpen]);
 
+  // Check if current image is preloaded
+  const isCurrentImagePreloaded = currentItem.type === 'image' 
+    ? imagePreloader.isImageCached(currentItem.src, 'gallery')
+    : false;
+
   const renderContent = () => {
     if (!currentItem) return null;
 
@@ -69,6 +119,7 @@ export default function ProjectView({ content = [], title }) {
               context="gallery"
               onClick={() => setIsImageViewerOpen(true)}
               priority={currentIndex === 0}
+              isPreloaded={isCurrentImagePreloaded}
               fillContainer={true}
               containerStyle={{
                 maxHeight: 'calc(100vh - 200px)',
@@ -120,6 +171,18 @@ export default function ProjectView({ content = [], title }) {
             {renderContent()}
           </motion.div>
         </AnimatePresence>
+
+        {/* Advanced preloading indicator */}
+        {isPreloading && (
+          <div className="absolute top-4 right-4 text-xs text-gray-500 z-10">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <span>
+                Preloading {preloadStats.loaded}/{preloadStats.total} images
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer solo si no es un juego */}
@@ -142,9 +205,17 @@ export default function ProjectView({ content = [], title }) {
             >
               PREV
             </motion.button>
-            <span className="text-sm text-black">
-              {currentIndex + 1} / {content.length}
-            </span>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-black">
+                {currentIndex + 1} / {content.length}
+              </span>
+              {currentItem.type === 'image' && isCurrentImagePreloaded && (
+                <div className="w-1 h-1 bg-green-500 rounded-full" title="Image cached"></div>
+              )}
+              {isPreloading && (
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              )}
+            </div>
             <motion.button
               onClick={() => {
                 if (currentIndex < content.length - 1) {
@@ -174,6 +245,7 @@ export default function ProjectView({ content = [], title }) {
           isOpen={isImageViewerOpen}
           onClose={() => setIsImageViewerOpen(false)}
           image={currentItem}
+          imagePreloader={imagePreloader}
           onPrev={() => {
             if (currentIndex > 0) {
               const newIndex = currentIndex - 1;

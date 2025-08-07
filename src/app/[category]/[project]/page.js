@@ -1,6 +1,35 @@
 import ProjectView from '@/components/layout/ProjectView';
 import { getProjectContent } from '@/lib/projects';
 
+// Función para generar metadatos dinámicos
+export async function generateMetadata({ params }) {
+  try {
+    const project = getProjectContent(params.category, params.project);
+    
+    if (!project) {
+      return {
+        title: 'Project Not Found - CETEO',
+        description: 'The requested project could not be found.',
+      };
+    }
+
+    return {
+      title: `${project.title} - CETEO`,
+      description: project.content?.description || `View ${project.title} by CETEO, new media artist.`,
+      openGraph: {
+        title: `${project.title} - CETEO`,
+        description: project.content?.description || `View ${project.title} by CETEO, new media artist.`,
+        type: 'article',
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Project - CETEO',
+      description: 'View this project by CETEO, new media artist.',
+    };
+  }
+}
+
 export default async function ProjectPage({ params }) {
   console.log('Received params:', params);
   

@@ -19,10 +19,30 @@ const dmSans = DM_Sans({
 
 export const metadata = {
   title: 'CETEO',
-  description: 'Artist Portfolio',
+  description: 'Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile. Currently working at the intersection of digital art and experimental sculptural installation.',
+  keywords: ['new media art', 'digital art', 'experimental installation', 'Chilean artist', 'CETEO'],
+  authors: [{ name: 'Mateo Cereceda' }],
+  creator: 'CETEO',
+  publisher: 'CETEO',
+  robots: 'index, follow',
+  openGraph: {
+    title: 'CETEO',
+    description: 'Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile.',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CETEO',
+    description: 'Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile.',
+  },
   icons: {
     icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
+  viewport: 'width=device-width, initial-scale=1',
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({ children }) {

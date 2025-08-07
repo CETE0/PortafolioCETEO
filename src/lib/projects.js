@@ -1,7 +1,7 @@
 export const projects = {
   photography: {
     'yofelia': {
-      title: 'autorretrato',
+      title: 'yofelia',
       content: [
         {
           type: 'image',
@@ -60,7 +60,7 @@ export const projects = {
 
   motion: {
     'video-art': {
-      title: 'Video Art',
+      title: 'video art',
       content: [
         {
           type: 'youtube',
@@ -70,7 +70,7 @@ export const projects = {
       ]
     },
     'animation': {
-      title: 'Animation',
+      title: 'animation',
       content: [
         {
           type: 'youtube',
@@ -104,7 +104,7 @@ export const projects = {
 
   thrdworks: {
     'photogrammetry': {
-      title: '3D Works',
+      title: '3D works',
       content: [
         {
           type: '3d',
@@ -127,7 +127,7 @@ export const projects = {
       ]
     },
     'organic':{
-      title: '3D Works',
+      title: '3D works',
       content: [
         {
           type: '3d',
@@ -190,7 +190,7 @@ export const projects = {
       ]
     },
     'atento-sargento': {
-      title: 'Atención Sargento',
+      title: 'atento sargento',
       content: [
         {
           type: 'image',
@@ -211,7 +211,7 @@ export const projects = {
       ]
     },
     'tomautoma': {
-      title: 'Automatoma',
+      title: 'tomautoma',
       content: [
         {
           type: 'image',
@@ -237,7 +237,7 @@ export const projects = {
       ]
     },
     'autorretrato': {
-      title: 'Autorretrato',
+      title: 'autorretrato',
       content: [
         {
           type: 'image',
@@ -258,7 +258,7 @@ export const projects = {
       ]
     },
     'una-flor-para-otra...': {
-      title: 'Tú Flor',
+      title: 'una flor para otra...',
       content: [
         {
           type: 'image',
@@ -294,7 +294,7 @@ export const projects = {
       ]
     },
     'para-ti-esto-es-un-juego': {
-      title: 'Para Ti Esto Es Un Juego',
+      title: 'para ti esto es un juego',
       content: [
         {
           type: 'image',
@@ -315,7 +315,7 @@ export const projects = {
       ]
     },
     'reparando': {
-      title: 'Reparando (2025)',
+      title: 'reparando',
       content: [
         {
           type: 'image',
@@ -341,7 +341,7 @@ export const projects = {
       ]
     },
     'sistemas-del-cuerpo': {
-      title: 'Sistemas del Cuerpo (2025)',
+      title: 'sistemas del cuerpo',
       content: [
         {
           type: 'image',
@@ -377,7 +377,7 @@ export const projects = {
       ]
     },
     'te-juro-que-es-primera-vez-que-me-pasa': {
-      title: 'Te juro que es primera vez que me pasa (2025)',
+      title: 'te juro que es primera vez que me pasa',
       content: [
         {
           type: 'image',

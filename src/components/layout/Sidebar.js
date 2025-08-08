@@ -3,14 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [activeCategory, setActiveCategory] = useState('artworks');
+  const { t } = useLanguage();
 
   const categories = {
     artworks: {
-      name: 'ARTWORKS',
+      name: t('sidebar.artworks'),
       projects: [
         'reparando',
         'sistemas-del-cuerpo',
@@ -24,13 +27,13 @@ const Sidebar = () => {
       ]
     },
     photography: {
-      name: 'PHOTOGRAPHY',
+      name: t('sidebar.photography'),
       projects: [
         'yofelia'
       ]
     },
     motion: {
-      name: 'MOTION',
+      name: t('sidebar.motion'),
       projects: [
         'video-art',
         'animation',
@@ -38,14 +41,14 @@ const Sidebar = () => {
       ]
     },
     thrdworks: {
-      name: '3D MODELS',
+      name: t('sidebar.models3d'),
       projects: [
         'photogrammetry',
         //'organic'
       ]
     },
     experimental: {
-      name: 'EXPERIMENTAL',
+      name: t('sidebar.experimental'),
       projects: [
         'dopa'
       ]
@@ -54,13 +57,18 @@ const Sidebar = () => {
 
   return (
     <nav className="h-screen w-full bg-white px-8 pb-6 pt-24 md:p-6 md:pt-6 border-r border-white overflow-y-auto flex flex-col items-center justify-center md:items-start md:justify-between">
-      <div>
+      <div className="w-full">
         {/* Header (hidden on mobile) */}
         <div className="hidden md:block mb-8">
-          <Link href="/" className="block">
-            <h1 className="text-xl font-bold text-red-600">CETEO</h1>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="block">
+                <h1 className="text-xl font-bold text-red-600">CETEO</h1>
+              </Link>
+              <LanguageSwitcher />
+            </div>
             <p className="text-sm text-gray-600">new?-media artist</p>
-          </Link>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -124,7 +132,7 @@ const Sidebar = () => {
             }
           }}
         >
-          CONTACT-ABOUT
+          {t('sidebar.contact')}
         </Link>
       </div>
     </nav>

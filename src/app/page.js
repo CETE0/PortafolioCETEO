@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import OptimizedImage from '../components/layout/OptimizedImage';
 import { getOptimizedImageUrl } from '../lib/cloudinary';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const projectImages = [
   '/images/apropiaciondigifisica/1.JPG',
@@ -128,6 +129,7 @@ const AnimationImage = ({ src, alt, className = '', style = {} }) => {
 };
 
 export default function Home() {
+  const { t, lang } = useLanguage();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [isHit, setIsHit] = useState(false);
@@ -424,7 +426,7 @@ export default function Home() {
         <div className="relative w-full max-w-4xl aspect-[4/3] flex items-center justify-center">
           <div className="text-center">
             <div className="text-black font-['Press_Start_2P'] text-lg mb-4">
-              Loading Assets...
+              {t('home.loadingAssets')}
             </div>
             <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div 
@@ -470,7 +472,7 @@ export default function Home() {
               >
                 <AnimationImage
                   src={ANIMATION_ASSETS.background}
-                  alt="Background"
+                  alt={t('home.backgroundAlt')}
                 />
               </motion.div>
             )}
@@ -513,8 +515,8 @@ export default function Home() {
         <div className="absolute inset-0 z-20 pointer-events-none">
           {showStart && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-6xl font-['Press_Start_2P'] text-red-600">
-                [START]
+              <span className={`${lang === 'es' ? 'text-4xl md:text-5xl' : 'text-6xl'} font-['Press_Start_2P'] text-red-600`}>
+                {t('home.start')}
               </span>
             </div>
           )}
@@ -524,10 +526,10 @@ export default function Home() {
       {/* UI text below the image */}
       <div className="w-full flex justify-center gap-4 font-['Press_Start_2P'] text-sm mt-4">
         {!gameStarted && (
-          <span className="text-red-600">[tap/click to start]</span>
+          <span className="text-red-600">{t('home.tapToStart')}</span>
         )}
         {gameStarted && (
-          <span className="text-red-600">shoot em' up     [score:{score}]</span>
+          <span className="text-red-600">{t('home.score', { score })}</span>
         )}
       </div>
     </div>

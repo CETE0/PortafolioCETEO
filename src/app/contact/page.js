@@ -2,43 +2,88 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Contact() {
+  const { t, lang } = useLanguage();
   const [isCvOpen, setIsCvOpen] = useState(false);
 
-  const cvItems = [
-    {
-      period: '2021 - X',
-      title: 'Ingeniería Civil Telemática (Telematics Civil Engineering)',
-      institution: 'Universidad Técnica Federico Santa María',
-    },
-    {
-      period: '2022 - 2025',
-      title: 'Licenciatura en Artes (Bachelor of Arts)',
-      institution: 'Pontificia Universidad Católica de Chile',
-    },
-    {
-      period: '2022',
-      title: 'Full Stack Web Development Bootcamp',
-      institution: 'Universidad del Desarrollo',
-    },
-    {
-      period: '2023',
-      title: 'International Workshop on Fashion Production, Coolhunting and Styling in NYC',
-      institution: 'Chile Fashion Studios',
-    },
-    {
-      period: '2024',
-      title: 'TOMA#1 Exhibition',
-      institution: 'Production & Curation',
-    },
-    {
-      period: '2024',
-      title: 'TOMA#2 Exhibition',
-      institution: 'Production & Curation',
+  const aboutText = useMemo(() => {
+    if (lang === 'es') {
+      return 'Mateo Cereceda (CETEO) es un artista de nuevos medios radicado en Santiago, Chile. Actualmente trabaja en la intersección entre el arte digital y la instalación escultórica experimental.';
     }
-  ];
+    return 'Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile. Currently working at the intersection of digital art and experimental sculptural installation.';
+  }, [lang]);
+
+  const cvItems = useMemo(() => {
+    if (lang === 'es') {
+      return [
+        {
+          period: '2021 - X',
+          title: 'Ingeniería Civil Telemática',
+          institution: 'Universidad Técnica Federico Santa María',
+        },
+        {
+          period: '2022 - 2025',
+          title: 'Licenciatura en Artes',
+          institution: 'Pontificia Universidad Católica de Chile',
+        },
+        {
+          period: '2022',
+          title: 'Bootcamp de Desarrollo Web Full Stack',
+          institution: 'Universidad del Desarrollo',
+        },
+        {
+          period: '2023',
+          title: 'Taller Internacional de Producción de Moda, Coolhunting y Styling en NYC',
+          institution: 'Chile Fashion Studios',
+        },
+        {
+          period: '2024',
+          title: 'Exposición TOMA#1',
+          institution: 'Producción y Curaduría',
+        },
+        {
+          period: '2024',
+          title: 'Exposición TOMA#2',
+          institution: 'Producción y Curaduría',
+        }
+      ];
+    }
+    return [
+      {
+        period: '2021 - X',
+        title: 'Telematics Civil Engineering',
+        institution: 'Universidad Técnica Federico Santa María',
+      },
+      {
+        period: '2022 - 2025',
+        title: 'Bachelor of Arts',
+        institution: 'Pontificia Universidad Católica de Chile',
+      },
+      {
+        period: '2022',
+        title: 'Full Stack Web Development Bootcamp',
+        institution: 'Universidad del Desarrollo',
+      },
+      {
+        period: '2023',
+        title: 'International Workshop on Fashion Production, Coolhunting and Styling in NYC',
+        institution: 'Chile Fashion Studios',
+      },
+      {
+        period: '2024',
+        title: 'TOMA#1 Exhibition',
+        institution: 'Production & Curation',
+      },
+      {
+        period: '2024',
+        title: 'TOMA#2 Exhibition',
+        institution: 'Production & Curation',
+      }
+    ];
+  }, [lang]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -54,7 +99,7 @@ export default function Contact() {
           >
             {/* Contact */}
             <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">Contact</h2>
+              <h2 className="text-xl font-light text-black">{t('contact.contact')}</h2>
               <div className="space-y-2 text-black text-sm font-light">
                 <p>contacto.ceteo@gmail.com</p>
               </div>
@@ -62,16 +107,15 @@ export default function Contact() {
 
             {/* About */}
             <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">About</h2>
+              <h2 className="text-xl font-light text-black">{t('contact.about')}</h2>
               <p className="text-black text-sm font-light leading-relaxed">
-                Mateo Cereceda (CETEO) is a new media artist based in Santiago, Chile. Currently working at the intersection of 
-                digital art and experimental sculptural installation.
+                {aboutText}
               </p>
             </div>
 
             {/* Social */}
             <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">Social</h2>
+              <h2 className="text-xl font-light text-black">{t('contact.social')}</h2>
               <div className="space-y-2">
                 <a 
                   href="https://www.instagram.com/c.e.teo/" 
@@ -95,7 +139,7 @@ export default function Contact() {
             <div className="relative w-full">
               <Image
                 src="/images/contact/gifcontacto.gif"
-                alt="Animated graphic"
+                alt={t('contact.altGif')}
                 width={800}
                 height={1067}
                 className="w-auto h-auto"
@@ -116,7 +160,7 @@ export default function Contact() {
           className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 transition-colors"
           onClick={() => setIsCvOpen(!isCvOpen)}
         >
-          <span className="text-xl font-light">CV</span>
+          <span className="text-xl font-light">{t('contact.cv')}</span>
           <motion.span
             animate={{ rotate: isCvOpen ? 180 : 0 }}
             transition={{ duration: 0.3 }}

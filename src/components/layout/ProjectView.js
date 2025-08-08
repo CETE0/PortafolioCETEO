@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import OptimizedImage from './OptimizedImage';
@@ -9,9 +9,12 @@ import TextContentView from './TextContentView';
 import SketchfabViewer from './SketchfabViewer';
 import ImageViewerModal from './ImageViewerModal';
 import { useImagePreloader } from '../../lib/imagePreloader';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { projectTranslations } from '@/i18n/projects';
 
 const KickGame = dynamic(() => import('../games/KickGame'), {
   ssr: false,
+  // Nota: no podemos usar hooks aquí, así que mantenemos texto neutro y lo traducimos fuera si es necesario
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
       <p className="text-black">Loading game...</p>
@@ -19,7 +22,8 @@ const KickGame = dynamic(() => import('../games/KickGame'), {
   ),
 });
 
-export default function ProjectView({ content = [], title }) {
+export default function ProjectView({ content = [], title, category, projectId }) {
+  const { t, lang } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -30,15 +34,34 @@ export default function ProjectView({ content = [], title }) {
   
   const imagePreloader = useImagePreloader();
 
-  if (!content || content.length === 0) {
+  // Contenido localizado (solo textos/alt/títulos; las rutas de imagen/video no cambian)
+  const localizedContent = useMemo(() => {
+    const tr = projectTranslations?.[category]?.[projectId];
+    if (!tr) return content;
+    const itemsTr = tr.items || [];
+    return content.map((item, idx) => {
+      const itemTr = itemsTr[idx] || {};
+      const localized = { ...item };
+      if (itemTr.text && itemTr.text[lang]) localized.text = itemTr.text[lang];
+      if (itemTr.alt && itemTr.alt[lang]) localized.alt = itemTr.alt[lang];
+      if (item.type === 'youtube' && itemTr.title && itemTr.title[lang]) localized.title = itemTr.title[lang];
+      if (item.type === '3d') {
+        if (itemTr.title && itemTr.title[lang]) localized.title = itemTr.title[lang];
+        if (itemTr.description && itemTr.description[lang]) localized.description = itemTr.description[lang];
+      }
+      return localized;
+    });
+  }, [content, category, projectId, lang]);
+
+  if (!localizedContent || localizedContent.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-black">
-        No content available
+        {t('project.noContent')}
       </div>
     );
   }
 
-  const currentItem = content[currentIndex];
+  const currentItem = localizedContent[currentIndex];
 
   // Advanced preloading with priority system and real-time progress - only once per project
   useEffect(() => {
@@ -134,12 +157,12 @@ export default function ProjectView({ content = [], title }) {
       // Solo permitir navegación si no estamos en el juego
       if (currentItem.type === 'game') return;
 
-      if (e.key === 'ArrowRight' && currentIndex < content.length - 1) {
+      if (e.key === 'ArrowRight' && currentIndex < localizedContent.length - 1) {
         const newIndex = currentIndex + 1;
         setDirection(1);
         setCurrentIndex(newIndex);
         // Close modal if navigating to non-image content
-        if (isImageViewerOpen && content[newIndex].type !== 'image') {
+        if (isImageViewerOpen && localizedContent[newIndex].type !== 'image') {
           setIsImageViewerOpen(false);
         }
       }
@@ -148,7 +171,7 @@ export default function ProjectView({ content = [], title }) {
         setDirection(-1);
         setCurrentIndex(newIndex);
         // Close modal if navigating to non-image content
-        if (isImageViewerOpen && content[newIndex].type !== 'image') {
+        if (isImageViewerOpen && localizedContent[newIndex].type !== 'image') {
           setIsImageViewerOpen(false);
         }
       }
@@ -159,7 +182,7 @@ export default function ProjectView({ content = [], title }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, content.length, currentItem.type, isImageViewerOpen, content]);
+  }, [currentIndex, localizedContent.length, currentItem.type, isImageViewerOpen, localizedContent]);
 
   // Check if current image is preloaded
   const isCurrentImagePreloaded = currentItem.type === 'image' 
@@ -246,7 +269,7 @@ export default function ProjectView({ content = [], title }) {
               <span className={`font-['Press_Start_2P'] transition-all duration-300 ${
                 preloadCompleted ? 'text-green-500' : 'text-gray-500'
               }`}>
-                Preloading {preloadStats.loaded}/{preloadStats.total} images
+                {t('project.preloading', { loaded: preloadStats.loaded, total: preloadStats.total })}
               </span>
             </div>
           </div>
@@ -271,11 +294,11 @@ export default function ProjectView({ content = [], title }) {
               disabled={currentIndex === 0}
               className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
             >
-              PREV
+              {t('project.prev')}
             </motion.button>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-black">
-                {currentIndex + 1} / {content.length}
+                {currentIndex + 1} / {localizedContent.length}
               </span>
               {currentItem.type === 'image' && isCurrentImagePreloaded && (
                 <div className="w-1 h-1 bg-green-500 rounded-full" title="Image cached"></div>
@@ -286,22 +309,22 @@ export default function ProjectView({ content = [], title }) {
             </div>
             <motion.button
               onClick={() => {
-                if (currentIndex < content.length - 1) {
+                if (currentIndex < localizedContent.length - 1) {
                   setDirection(1);
                   setCurrentIndex(currentIndex + 1);
                 }
               }}
-              disabled={currentIndex === content.length - 1}
+              disabled={currentIndex === localizedContent.length - 1}
               className="text-sm text-black hover:text-red-500 transition-colors disabled:opacity-50 disabled:hover:text-black"
             >
-              NEXT
+              {t('project.next')}
             </motion.button>
           </div>
 
           {/* Texto descriptivo */}
           <div className="px-4 md:px-8 py-4 border-t border-white">
             <p className="text-sm text-black font-light">
-              {currentItem.text || content.find(item => item.text)?.text || ''}
+              {currentItem.text || localizedContent.find(item => item.text)?.text || ''}
             </p>
           </div>
         </div>
@@ -319,25 +342,25 @@ export default function ProjectView({ content = [], title }) {
               const newIndex = currentIndex - 1;
               setDirection(-1);
               setCurrentIndex(newIndex);
-              if (content[newIndex].type !== 'image') {
+              if (localizedContent[newIndex].type !== 'image') {
                 setIsImageViewerOpen(false);
               }
             }
           }}
           onNext={() => {
-            if (currentIndex < content.length - 1) {
+            if (currentIndex < localizedContent.length - 1) {
               const newIndex = currentIndex + 1;
               setDirection(1);
               setCurrentIndex(newIndex);
-              if (content[newIndex].type !== 'image') {
+              if (localizedContent[newIndex].type !== 'image') {
                 setIsImageViewerOpen(false);
               }
             }
           }}
           hasPrev={currentIndex > 0}
-          hasNext={currentIndex < content.length - 1}
+          hasNext={currentIndex < localizedContent.length - 1}
           currentIndex={currentIndex + 1}
-          totalItems={content.length}
+          totalItems={localizedContent.length}
         />
       )}
     </div>

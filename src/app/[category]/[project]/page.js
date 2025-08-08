@@ -56,6 +56,8 @@ export default async function ProjectPage({ params }) {
         <ProjectView 
           title={project.title}
           content={project.content}
+          category={project.category}
+          projectId={project.projectId}
         />
       </div>
     );

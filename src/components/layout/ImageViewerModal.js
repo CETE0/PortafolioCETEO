@@ -1,5 +1,8 @@
+"use client";
+
 import { motion, AnimatePresence } from 'framer-motion';
 import OptimizedImage from './OptimizedImage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ImageViewerModal({ 
   isOpen, 
@@ -13,6 +16,7 @@ export default function ImageViewerModal({
   currentIndex,
   totalItems
 }) {
+  const { t } = useLanguage();
   if (!isOpen || !image) return null;
 
   // Handler to only close if the background itself is clicked
@@ -78,14 +82,12 @@ export default function ImageViewerModal({
         {!isImagePreloaded && (
           <div className="absolute top-4 left-4 text-xs text-white/70 z-10 flex items-center space-x-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span>Loading high-res...</span>
+            <span>{t('modal.loadingHighRes')}</span>
           </div>
         )}
 
         {isImagePreloaded && (
           <div className="absolute top-4 left-4 text-xs text-white/50 z-10 flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Cached</span>
           </div>
         )}
 

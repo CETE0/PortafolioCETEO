@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import dynamic from 'next/dynamic';
 
@@ -6,10 +6,12 @@ const ExperimentalShooter = dynamic(() => import('@/components/games/experimenta
   ssr: false,
 });
 
-export default function Home() {
+export default function ExperimentalPage() {
   return (
     <div className="w-full h-full">
       <ExperimentalShooter />
     </div>
   );
 }
+
+

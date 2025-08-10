@@ -60,6 +60,15 @@ const GAME_CONFIG = {
   shotOverlay: {
     durationMs: 320, // tiempo visible del sprite de disparo
   },
+  explosion: {
+    shardsPerModel: 28,
+    shardSizeMin: 0.05,
+    shardSizeMax: 0.12,
+    speed: 2.0,
+    upwardBoost: 1.0,
+    gravity: 3.0,
+    lifetimeMs: 1200,
+  },
 };
 
 // Gestor de texturas con caché LRU y prefetch utilizando ImageBitmapLoader
@@ -133,6 +142,7 @@ export class ArtShooterGame {
     this.raycaster = new THREE.Raycaster();
     this.targets = [];
     this.currentTarget = null;
+    this.rowGroup = null;
     this.plinthMesh = null;
     this.rotationSpeeds = new WeakMap();
     this.isActive = false;
@@ -167,6 +177,8 @@ export class ArtShooterGame {
     this.desktopEscHintEl = null;
     this.onWindowBlur = null;
     this.onWindowFocus = null;
+    this.explosions = [];
+    this.animationStates = new WeakMap();
     this.randomMusicPaths = [
       '/game/assets/audio/postfaktisch/gls/mp3/11_affen-abbild.mp3',
       '/game/assets/audio/postfaktisch/gls/mp3/11_amtskoerper.mp3',
@@ -366,6 +378,161 @@ export class ArtShooterGame {
     }
   }
 
+  // Modelo humano low poly procedimental usando primitivas
+  createLowPolyHuman(sharedMaterial) {
+    const group = new THREE.Group();
+
+    if (sharedMaterial && !sharedMaterial.flatShading) {
+      sharedMaterial.flatShading = true;
+      sharedMaterial.needsUpdate = true;
+    }
+
+    // Proporciones básicas (altura objetivo ~1.8)
+    const torsoHeight = 0.7;
+    const pelvisHeight = 0.3;
+    const neckHeight = 0.08;
+    const headRadius = 0.18;
+    const upperArmLength = 0.35;
+    const lowerArmLength = 0.35;
+    const upperLegLength = 0.45;
+    const lowerLegLength = 0.45;
+
+    // Torso
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, torsoHeight, 0.25), sharedMaterial);
+    torso.position.set(0, pelvisHeight + torsoHeight / 2, 0);
+    group.add(torso);
+
+    // Pelvis
+    const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.4, pelvisHeight, 0.22), sharedMaterial);
+    pelvis.position.set(0, pelvisHeight / 2, 0);
+    group.add(pelvis);
+
+    // Hombros
+    const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.18), sharedMaterial);
+    shoulders.position.set(0, pelvisHeight + torsoHeight - 0.06, 0);
+    group.add(shoulders);
+
+    // Cuello
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, neckHeight, 6), sharedMaterial);
+    neck.position.set(0, pelvisHeight + torsoHeight + neckHeight / 2, 0);
+    group.add(neck);
+
+    // Cabeza
+    const head = new THREE.Mesh(new THREE.IcosahedronGeometry(headRadius, 0), sharedMaterial);
+    head.position.set(0, pelvisHeight + torsoHeight + neckHeight + headRadius, 0);
+    group.add(head);
+
+    // Brazos (guardamos referencias para animación)
+    const armRadius = 0.11;
+    const forearmRadius = 0.1;
+    const armOffsetX = 0.35;
+    const shoulderY = shoulders.position.y;
+    const upperArmGeo = new THREE.BoxGeometry(armRadius, upperArmLength, armRadius);
+    const lowerArmGeo = new THREE.BoxGeometry(forearmRadius, lowerArmLength, forearmRadius);
+
+    const lUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
+    lUpperArm.position.set(-armOffsetX, shoulderY - upperArmLength / 2, 0);
+    group.add(lUpperArm);
+    const lLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
+    lLowerArm.position.set(-armOffsetX, shoulderY - upperArmLength - lowerArmLength / 2, 0);
+    group.add(lLowerArm);
+
+    const rUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
+    rUpperArm.position.set(armOffsetX, shoulderY - upperArmLength / 2, 0);
+    group.add(rUpperArm);
+    const rLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
+    rLowerArm.position.set(armOffsetX, shoulderY - upperArmLength - lowerArmLength / 2, 0);
+    group.add(rLowerArm);
+
+    // Piernas
+    const legRadius = 0.14;
+    const shinRadius = 0.13;
+    const hipOffsetX = 0.2;
+    const hipY = pelvis.position.y - pelvisHeight / 2;
+    const upperLegGeo = new THREE.BoxGeometry(legRadius, upperLegLength, legRadius);
+    const lowerLegGeo = new THREE.BoxGeometry(shinRadius, lowerLegLength, shinRadius);
+
+    const lUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
+    lUpperLeg.position.set(-hipOffsetX, hipY - upperLegLength / 2, 0);
+    group.add(lUpperLeg);
+    const lLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
+    lLowerLeg.position.set(-hipOffsetX, hipY - upperLegLength - lowerLegLength / 2, 0);
+    group.add(lLowerLeg);
+
+    const rUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
+    rUpperLeg.position.set(hipOffsetX, hipY - upperLegLength / 2, 0);
+    group.add(rUpperLeg);
+    const rLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
+    rLowerLeg.position.set(hipOffsetX, hipY - upperLegLength - lowerLegLength / 2, 0);
+    group.add(rLowerLeg);
+
+    // Pies
+    const footGeo = new THREE.BoxGeometry(0.25, 0.08, 0.35);
+    const lFoot = new THREE.Mesh(footGeo, sharedMaterial);
+    lFoot.position.set(-hipOffsetX, hipY - upperLegLength - lowerLegLength - 0.04, 0.12);
+    group.add(lFoot);
+    const rFoot = new THREE.Mesh(footGeo, sharedMaterial);
+    rFoot.position.set(hipOffsetX, hipY - upperLegLength - lowerLegLength - 0.04, 0.12);
+    group.add(rFoot);
+
+    // Manos
+    const handGeo = new THREE.BoxGeometry(0.14, 0.12, 0.14);
+    const lHand = new THREE.Mesh(handGeo, sharedMaterial);
+    lHand.position.set(-armOffsetX, shoulderY - upperArmLength - lowerArmLength - 0.06, 0);
+    group.add(lHand);
+    const rHand = new THREE.Mesh(handGeo, sharedMaterial);
+    rHand.position.set(armOffsetX, shoulderY - upperArmLength - lowerArmLength - 0.06, 0);
+    group.add(rHand);
+
+    // Centrar pivote XZ
+    const bbox = new THREE.Box3().setFromObject(group);
+    const center = new THREE.Vector3();
+    bbox.getCenter(center);
+    group.position.sub(new THREE.Vector3(center.x, 0, center.z));
+
+    // Escalar a altura objetivo (más grande)
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    const targetHeight = 2.6; // antes ~1.8
+    if (size.y > 0) {
+      const s = targetHeight / size.y;
+      group.scale.setScalar(s);
+    }
+
+    group.traverse((obj) => {
+      if (obj.isMesh) {
+        obj.castShadow = true;
+      }
+    });
+
+    // Guardar referencias para animación
+    group.userData.limbs = {
+      lUpperArm,
+      lLowerArm,
+      rUpperArm,
+      rLowerArm,
+      lUpperLeg,
+      lLowerLeg,
+      rUpperLeg,
+      rLowerLeg,
+      shoulders,
+      pelvis,
+      torso,
+      head,
+    };
+
+    // Inicializar estado de animación
+    this.animationStates.set(group, {
+      t: Math.random() * Math.PI * 2, // fase aleatoria
+      speed: 1 + Math.random() * 0.5,
+      ampArm: 0.5,
+      ampLeg: 0.5,
+      baseY: group.position.y,
+    });
+
+    return group;
+  }
+
   async init() {
     this.scene = new THREE.Scene();
     const isMobile = this.isTouchDevice;
@@ -484,7 +651,7 @@ export class ArtShooterGame {
     this.artworkPaths = this.getArtworkPaths();
     this.nextTexturePromise = null;
 
-    this.createPlinth();
+    // Plinto eliminado
     if (!this.isTouchDevice) this.createDesktopOverlays();
     this.spawnSingleTarget();
     // Contador desactivado: no se crea UI de score
@@ -592,57 +759,91 @@ export class ArtShooterGame {
   }
 
   createPlinth() {
-    // Plinto blanco: más alto en eje Z visual (aumentamos Y para altura física)
-    const sizeX = 2.6;
-    const sizeY = 1.2; // altura del plinto (antes 0.4)
-    const sizeZ = 2.6;
-    const geo = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.0 });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(0, sizeY / 2, -3.5);
-    mesh.receiveShadow = true;
-    this.scene.add(mesh);
-    this.plinthMesh = mesh;
+    // Plinto eliminado: mantener compatibilidad por si se llama
+    this.plinthMesh = null;
   }
 
   async spawnSingleTarget() {
     if (!this.artworkPaths?.length) return;
-    // Elimina objetivo previo si existe
-    if (this.currentTarget) {
-      this.destroyTarget(this.currentTarget);
-      this.currentTarget = null;
+    // Limpiar fila previa si existe
+    if (this.rowGroup) {
+      this.rowGroup.traverse((child) => {
+        if (child.isMesh) {
+          if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach((m) => { if (m.map) m.map.dispose(); m.dispose?.(); });
+            else { if (child.material.map) child.material.map.dispose(); child.material.dispose?.(); }
+          }
+          if (child.geometry) child.geometry.dispose();
+        }
+      });
+      if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
+      this.rowGroup = null;
     }
-    // Seleccionar URL aleatoria y cargar textura usando TextureManager (con prefetch 1)
-    const url = this.artworkPaths[Math.floor(Math.random() * this.artworkPaths.length)];
-    const tex = await (this.nextTexturePromise || this.textureManager.load(url));
-    // Lanzar prefetch de la siguiente
-    const nextUrl = this.artworkPaths[Math.floor(Math.random() * this.artworkPaths.length)];
-    this.nextTexturePromise = this.textureManager.load(nextUrl);
+    this.targets = [];
+    this.currentTarget = null;
+    // Elegir 3 texturas únicas
+    const pickUnique = (arr, n) => {
+      const res = [];
+      const used = new Set();
+      const max = Math.min(n, arr.length);
+      while (res.length < max) {
+        const idx = Math.floor(Math.random() * arr.length);
+        if (!used.has(idx)) { used.add(idx); res.push(arr[idx]); }
+      }
+      return res;
+    };
+    const urls = pickUnique(this.artworkPaths, 3);
+    const textures = await Promise.all(urls.map((u) => this.textureManager.load(u)));
 
-    const geometry = this.getRandomGeometry();
-    // Reutilizar material si existe
+    // Material base compartido (sin mapa) para propiedades comunes
     if (!this.sharedMaterial) {
-      this.sharedMaterial = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.1 });
-    } else {
-      this.sharedMaterial.map = tex;
-      this.sharedMaterial.needsUpdate = true;
-      if (this.sharedMaterial.map) this.sharedMaterial.map.needsUpdate = true;
+      this.sharedMaterial = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.1, flatShading: true });
     }
-    const mesh = new THREE.Mesh(geometry, this.sharedMaterial);
-    mesh.castShadow = true;
-    // Posición centrada sobre el plinto, ajustando altura a top del plinto
-    const baseX = this.plinthMesh ? this.plinthMesh.position.x : 0;
-    const plinthTopY = this.plinthMesh ? (this.plinthMesh.position.y + (this.plinthMesh.geometry.parameters.height / 2)) : 0.6;
-    const baseZ = this.plinthMesh ? this.plinthMesh.position.z : -3.5;
-    const modelHeight = geometry.parameters.height || 1.6; // mejor aproximación para cone/cylinder/box
-    mesh.position.set(baseX, plinthTopY + modelHeight / 2 + 0.02, baseZ);
 
-    const rotSpeed = new THREE.Vector3(0, 0.01, 0);
-    this.rotationSpeeds.set(mesh, rotSpeed);
+    // Crear grupo fila
+    const rowGroup = new THREE.Group();
+    // Crear modelos y medir ancho máximo para espaciado uniforme
+    const models = textures.map((tex) => {
+      const mat = this.sharedMaterial.clone();
+      mat.map = tex || null;
+      mat.needsUpdate = true;
+      const m = this.createLowPolyHuman(mat);
+      return m;
+    });
 
-    this.scene.add(mesh);
-    this.targets = [mesh];
-    this.currentTarget = mesh;
+    // Determinar alturas y anchos
+    let maxWidth = 0;
+    let maxHeight = 0;
+    const sizes = models.map((m) => {
+      const bb = new THREE.Box3().setFromObject(m);
+      const sz = new THREE.Vector3();
+      bb.getSize(sz);
+      maxWidth = Math.max(maxWidth, sz.x);
+      maxHeight = Math.max(maxHeight, sz.y);
+      return sz;
+    });
+
+    const margin = 0.6;
+    const spacing = maxWidth + margin;
+    const positionsX = [-spacing, 0, spacing];
+    const baseZ = -3.5;
+
+    models.forEach((m, i) => {
+      const h = sizes[i].y || maxHeight;
+      m.position.set(positionsX[i], h / 2 + 0.02, 0);
+      rowGroup.add(m);
+    });
+    rowGroup.position.z = baseZ;
+
+    // Rotación y animación independiente por modelo
+    models.forEach((m) => {
+      const speed = 0.008 + Math.random() * 0.006;
+      this.rotationSpeeds.set(m, new THREE.Vector3(0, speed, 0));
+    });
+
+    this.scene.add(rowGroup);
+    this.rowGroup = rowGroup;
+    this.targets = models;
   }
 
   handlePrimaryClick(e) {
@@ -724,6 +925,79 @@ export class ArtShooterGame {
 
   createImpactMark() { /* desactivado */ }
 
+  // Crear explosión low poly a partir de un modelo
+  createExplosionFromObject(root) {
+    try {
+      root.updateMatrixWorld?.(true);
+      const bbox = new THREE.Box3().setFromObject(root);
+      const center = new THREE.Vector3();
+      bbox.getCenter(center);
+      const size = new THREE.Vector3();
+      bbox.getSize(size);
+      const shards = [];
+      const velocities = [];
+      const angularVelocities = [];
+
+      // Intentar reutilizar mapa de textura de algún hijo para mantener paleta
+      let sampleMap = null;
+      root.traverse?.((c) => {
+        if (!sampleMap && c.isMesh && c.material && !Array.isArray(c.material) && c.material.map) {
+          sampleMap = c.material.map;
+        }
+      });
+
+      const n = GAME_CONFIG.explosion.shardsPerModel;
+      for (let i = 0; i < n; i++) {
+        const r = THREE.MathUtils.lerp(GAME_CONFIG.explosion.shardSizeMin, GAME_CONFIG.explosion.shardSizeMax, Math.random());
+        const geom = new THREE.TetrahedronGeometry(r, 0);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.85,
+          metalness: 0.05,
+          flatShading: true,
+          transparent: true,
+          opacity: 1,
+          map: sampleMap || null,
+        });
+
+        const shard = new THREE.Mesh(geom, mat);
+        // Posición inicial aleatoria dentro del bbox (mundo)
+        shard.position.set(
+          THREE.MathUtils.lerp(bbox.min.x, bbox.max.x, Math.random()),
+          THREE.MathUtils.lerp(bbox.min.y, bbox.max.y, Math.random()),
+          THREE.MathUtils.lerp(bbox.min.z, bbox.max.z, Math.random())
+        );
+        // Velocidad inicial
+        const dir = new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.6 + 0.4, Math.random() - 0.5).normalize();
+        const speed = GAME_CONFIG.explosion.speed * (0.6 + Math.random() * 0.8);
+        const vel = dir.multiplyScalar(speed);
+        vel.y += GAME_CONFIG.explosion.upwardBoost * (0.2 + Math.random() * 0.8);
+
+        // Velocidad angular
+        const angVel = new THREE.Vector3(
+          (Math.random() - 0.5) * 6,
+          (Math.random() - 0.5) * 6,
+          (Math.random() - 0.5) * 6
+        );
+
+        this.scene.add(shard);
+        shards.push(shard);
+        velocities.push(vel);
+        angularVelocities.push(angVel);
+      }
+
+      this.explosions.push({
+        meshes: shards,
+        velocities,
+        angularVelocities,
+        startTime: performance.now(),
+        lifetimeMs: GAME_CONFIG.explosion.lifetimeMs,
+      });
+    } catch (e) {
+      // silencioso
+    }
+  }
+
   shoot() {
     if (!this.isActive) return;
     const now = performance.now();
@@ -733,7 +1007,7 @@ export class ArtShooterGame {
     this.playSound('kick');
 
     this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
-    const intersections = this.raycaster.intersectObjects(this.targets, false);
+    const intersections = this.raycaster.intersectObjects(this.targets, true);
 
     if (intersections.length > 0) {
       const hit = intersections[0];
@@ -741,7 +1015,13 @@ export class ArtShooterGame {
       // Marca de impacto desactivada
       this.destroyTarget(mesh);
       this.updateScore(100);
-      this.spawnSingleTarget();
+      if (this.targets.length === 0) {
+        if (this.rowGroup) {
+          if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
+          this.rowGroup = null;
+        }
+        this.spawnSingleTarget();
+      }
       if (navigator.vibrate) navigator.vibrate(20);
     } else {
       this.updateScore(0);
@@ -749,16 +1029,49 @@ export class ArtShooterGame {
   }
 
   destroyTarget(mesh) {
-    const idx = this.targets.indexOf(mesh);
-    if (idx >= 0) this.targets.splice(idx, 1);
-    // No disponer sharedMaterial; se reutiliza
-    if (mesh.material !== this.sharedMaterial) {
-      if (mesh.material?.map) mesh.material.map.dispose();
-      if (mesh.material) mesh.material.dispose();
+    // Asegurar que removemos el root que guardamos en targets (fila o modelo entero)
+    let root = mesh;
+    while (root.parent && !this.targets.includes(root)) {
+      root = root.parent;
     }
-    if (mesh.geometry) mesh.geometry.dispose();
-    this.scene.remove(mesh);
-    if (this.currentTarget === mesh) this.currentTarget = null;
+    const idx = this.targets.indexOf(root);
+    if (idx >= 0) this.targets.splice(idx, 1);
+    // No disponer sharedMaterial; se reutiliza. Manejar grupos.
+    // Crear explosión antes de eliminar
+    this.createExplosionFromObject(root);
+    if (root.traverse) {
+      root.traverse((child) => {
+        if (child.isMesh) {
+          if (child.material && child.material !== this.sharedMaterial) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((m) => {
+                if (m?.map) m.map.dispose();
+                m.dispose?.();
+              });
+            } else {
+              if (child.material.map) child.material.map.dispose();
+              child.material.dispose?.();
+            }
+          }
+          if (child.geometry) child.geometry.dispose();
+        }
+      });
+    } else {
+      if (root.material && root.material !== this.sharedMaterial) {
+        if (Array.isArray(root.material)) {
+          root.material.forEach((m) => {
+            if (m?.map) m.map.dispose();
+            m.dispose?.();
+          });
+        } else {
+          if (root.material.map) root.material.map.dispose();
+          root.material.dispose?.();
+        }
+      }
+      if (root.geometry) root.geometry.dispose();
+    }
+    if (root.parent) root.parent.remove(root); else this.scene.remove(root);
+    if (this.currentTarget === root) this.currentTarget = null;
   }
 
   handleResize() {
@@ -921,7 +1234,77 @@ export class ArtShooterGame {
         m.rotation.y += s.y * scale;
         m.rotation.z += s.z * scale;
       }
+      // Animación de marcha simple
+      const anim = this.animationStates.get(m);
+      if (anim && m.userData && m.userData.limbs) {
+        anim.t += delta * anim.speed;
+        const {
+          lUpperArm,
+          rUpperArm,
+          lLowerArm,
+          rLowerArm,
+          lUpperLeg,
+          rUpperLeg,
+          lLowerLeg,
+          rLowerLeg,
+        } = m.userData.limbs;
+
+        const swingArm = Math.sin(anim.t) * anim.ampArm;
+        const swingLeg = Math.sin(anim.t) * anim.ampLeg;
+
+        // Rotaciones alrededor del eje Z para brazos y X para piernas (ajuste low poly)
+        if (lUpperArm) lUpperArm.rotation.z = swingArm;
+        if (rUpperArm) rUpperArm.rotation.z = -swingArm;
+        if (lLowerArm) lLowerArm.rotation.z = -swingArm * 0.5;
+        if (rLowerArm) rLowerArm.rotation.z = swingArm * 0.5;
+
+        if (lUpperLeg) lUpperLeg.rotation.x = -swingLeg;
+        if (rUpperLeg) rUpperLeg.rotation.x = swingLeg;
+        if (lLowerLeg) lLowerLeg.rotation.x = Math.max(0, swingLeg * 0.5);
+        if (rLowerLeg) rLowerLeg.rotation.x = Math.max(0, -swingLeg * 0.5);
+
+        // Sutil bob vertical del cuerpo completo
+        const bob = Math.abs(Math.cos(anim.t)) * 0.02;
+        const baseY = (m.userData.baseY || m.position.y);
+        m.position.y = baseY + bob;
+        if (!m.userData.baseY) m.userData.baseY = baseY;
+      }
     });
+    // Actualizar explosiones
+    if (this.explosions.length) {
+      const now = performance.now();
+      for (let i = this.explosions.length - 1; i >= 0; i--) {
+        const exp = this.explosions[i];
+        const t = (now - exp.startTime) / exp.lifetimeMs;
+        const fade = 1 - Math.min(Math.max(t, 0), 1);
+        for (let j = 0; j < exp.meshes.length; j++) {
+          const mesh = exp.meshes[j];
+          const vel = exp.velocities[j];
+          const ang = exp.angularVelocities[j];
+          // Física simple
+          vel.y -= GAME_CONFIG.explosion.gravity * delta;
+          mesh.position.x += vel.x * delta;
+          mesh.position.y += vel.y * delta;
+          mesh.position.z += vel.z * delta;
+          mesh.rotation.x += ang.x * delta;
+          mesh.rotation.y += ang.y * delta;
+          mesh.rotation.z += ang.z * delta;
+          if (mesh.material) mesh.material.opacity = fade;
+        }
+        if (t >= 1) {
+          // limpiar
+          exp.meshes.forEach((mesh) => {
+            if (mesh.parent) mesh.parent.remove(mesh);
+            if (mesh.material) {
+              if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose());
+              else mesh.material.dispose();
+            }
+            if (mesh.geometry) mesh.geometry.dispose();
+          });
+          this.explosions.splice(i, 1);
+        }
+      }
+    }
     // Simple frame skip adaptativo en móvil si el delta sube mucho
     if (this.isTouchDevice && delta > 0.035 && Math.random() < 0.33) {
       // salta este frame ocasionalmente para bajar carga
@@ -987,6 +1370,21 @@ export class ArtShooterGame {
       });
       this.scene.clear();
       this.scene = null;
+    }
+
+    // Limpiar explosiones restantes
+    if (this.explosions && this.explosions.length) {
+      this.explosions.forEach((exp) => {
+        exp.meshes.forEach((mesh) => {
+          if (mesh.parent) mesh.parent.remove(mesh);
+          if (mesh.material) {
+            if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose());
+            else mesh.material.dispose();
+          }
+          if (mesh.geometry) mesh.geometry.dispose();
+        });
+      });
+      this.explosions = [];
     }
 
     if (this.ui && this.ui.parentNode) this.ui.parentNode.removeChild(this.ui);

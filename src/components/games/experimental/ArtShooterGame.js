@@ -60,6 +60,24 @@ const GAME_CONFIG = {
   shotOverlay: {
     durationMs: 320, // tiempo visible del sprite de disparo
   },
+  animation: {
+    speedBase: 1.0,
+    speedJitter: 0.4,
+    amplitudes: {
+      arm: 0.5, // rad
+      leg: 0.5, // rad
+      elbow: 0.4, // rad
+      knee: 0.6, // rad
+      torsoTwist: 0.12, // rad
+      hipTwist: 0.10, // rad
+      bob: 0.02, // units
+    },
+  },
+  orbit: {
+    radius: 4.0,
+    speed: 0.25, // rad/seg
+    height: 0.0, // altura del ancla; el modelo se eleva por su propia altura
+  },
   explosion: {
     shardsPerModel: 28,
     shardSizeMin: 0.05,
@@ -422,7 +440,7 @@ export class ArtShooterGame {
     head.position.set(0, pelvisHeight + torsoHeight + neckHeight + headRadius, 0);
     group.add(head);
 
-    // Brazos (guardamos referencias para animación)
+    // Brazos con pivotes de articulación (hombro y codo)
     const armRadius = 0.11;
     const forearmRadius = 0.1;
     const armOffsetX = 0.35;
@@ -430,19 +448,47 @@ export class ArtShooterGame {
     const upperArmGeo = new THREE.BoxGeometry(armRadius, upperArmLength, armRadius);
     const lowerArmGeo = new THREE.BoxGeometry(forearmRadius, lowerArmLength, forearmRadius);
 
+    const lShoulderPivot = new THREE.Object3D();
+    lShoulderPivot.position.set(-armOffsetX, shoulderY, 0);
+    group.add(lShoulderPivot);
     const lUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
-    lUpperArm.position.set(-armOffsetX, shoulderY - upperArmLength / 2, 0);
-    group.add(lUpperArm);
+    lUpperArm.position.set(0, -upperArmLength / 2, 0);
+    lShoulderPivot.add(lUpperArm);
+    const lElbowPivot = new THREE.Object3D();
+    lElbowPivot.position.set(0, -upperArmLength, 0);
+    lShoulderPivot.add(lElbowPivot);
     const lLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
-    lLowerArm.position.set(-armOffsetX, shoulderY - upperArmLength - lowerArmLength / 2, 0);
-    group.add(lLowerArm);
+    lLowerArm.position.set(0, -lowerArmLength / 2, 0);
+    lElbowPivot.add(lLowerArm);
 
+    const rShoulderPivot = new THREE.Object3D();
+    rShoulderPivot.position.set(armOffsetX, shoulderY, 0);
+    group.add(rShoulderPivot);
     const rUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
-    rUpperArm.position.set(armOffsetX, shoulderY - upperArmLength / 2, 0);
-    group.add(rUpperArm);
+    rUpperArm.position.set(0, -upperArmLength / 2, 0);
+    rShoulderPivot.add(rUpperArm);
+    const rElbowPivot = new THREE.Object3D();
+    rElbowPivot.position.set(0, -upperArmLength, 0);
+    rShoulderPivot.add(rElbowPivot);
     const rLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
-    rLowerArm.position.set(armOffsetX, shoulderY - upperArmLength - lowerArmLength / 2, 0);
-    group.add(rLowerArm);
+    rLowerArm.position.set(0, -lowerArmLength / 2, 0);
+    rElbowPivot.add(rLowerArm);
+
+    // Muñecas y manos
+    const handGeo = new THREE.BoxGeometry(0.14, 0.12, 0.14);
+    const lWristPivot = new THREE.Object3D();
+    lWristPivot.position.set(0, -lowerArmLength, 0);
+    lElbowPivot.add(lWristPivot);
+    const lHand = new THREE.Mesh(handGeo, sharedMaterial);
+    lHand.position.set(0, -0.12 / 2, 0.06);
+    lWristPivot.add(lHand);
+
+    const rWristPivot = new THREE.Object3D();
+    rWristPivot.position.set(0, -lowerArmLength, 0);
+    rElbowPivot.add(rWristPivot);
+    const rHand = new THREE.Mesh(handGeo, sharedMaterial);
+    rHand.position.set(0, -0.12 / 2, 0.06);
+    rWristPivot.add(rHand);
 
     // Piernas
     const legRadius = 0.14;
@@ -452,37 +498,50 @@ export class ArtShooterGame {
     const upperLegGeo = new THREE.BoxGeometry(legRadius, upperLegLength, legRadius);
     const lowerLegGeo = new THREE.BoxGeometry(shinRadius, lowerLegLength, shinRadius);
 
+    const lHipPivot = new THREE.Object3D();
+    lHipPivot.position.set(-hipOffsetX, hipY, 0);
+    group.add(lHipPivot);
     const lUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
-    lUpperLeg.position.set(-hipOffsetX, hipY - upperLegLength / 2, 0);
-    group.add(lUpperLeg);
+    lUpperLeg.position.set(0, -upperLegLength / 2, 0);
+    lHipPivot.add(lUpperLeg);
+    const lKneePivot = new THREE.Object3D();
+    lKneePivot.position.set(0, -upperLegLength, 0);
+    lHipPivot.add(lKneePivot);
     const lLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
-    lLowerLeg.position.set(-hipOffsetX, hipY - upperLegLength - lowerLegLength / 2, 0);
-    group.add(lLowerLeg);
+    lLowerLeg.position.set(0, -lowerLegLength / 2, 0);
+    lKneePivot.add(lLowerLeg);
 
+    const rHipPivot = new THREE.Object3D();
+    rHipPivot.position.set(hipOffsetX, hipY, 0);
+    group.add(rHipPivot);
     const rUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
-    rUpperLeg.position.set(hipOffsetX, hipY - upperLegLength / 2, 0);
-    group.add(rUpperLeg);
+    rUpperLeg.position.set(0, -upperLegLength / 2, 0);
+    rHipPivot.add(rUpperLeg);
+    const rKneePivot = new THREE.Object3D();
+    rKneePivot.position.set(0, -upperLegLength, 0);
+    rHipPivot.add(rKneePivot);
     const rLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
-    rLowerLeg.position.set(hipOffsetX, hipY - upperLegLength - lowerLegLength / 2, 0);
-    group.add(rLowerLeg);
+    rLowerLeg.position.set(0, -lowerLegLength / 2, 0);
+    rKneePivot.add(rLowerLeg);
 
-    // Pies
+    // Tobillos y pies (con pivote de tobillo)
     const footGeo = new THREE.BoxGeometry(0.25, 0.08, 0.35);
+    const lAnklePivot = new THREE.Object3D();
+    lAnklePivot.position.set(0, -lowerLegLength, 0);
+    lKneePivot.add(lAnklePivot);
     const lFoot = new THREE.Mesh(footGeo, sharedMaterial);
-    lFoot.position.set(-hipOffsetX, hipY - upperLegLength - lowerLegLength - 0.04, 0.12);
-    group.add(lFoot);
-    const rFoot = new THREE.Mesh(footGeo, sharedMaterial);
-    rFoot.position.set(hipOffsetX, hipY - upperLegLength - lowerLegLength - 0.04, 0.12);
-    group.add(rFoot);
+    // Que el pie caiga desde el tobillo
+    lFoot.position.set(0, -0.08 / 2, 0.12);
+    lAnklePivot.add(lFoot);
 
-    // Manos
-    const handGeo = new THREE.BoxGeometry(0.14, 0.12, 0.14);
-    const lHand = new THREE.Mesh(handGeo, sharedMaterial);
-    lHand.position.set(-armOffsetX, shoulderY - upperArmLength - lowerArmLength - 0.06, 0);
-    group.add(lHand);
-    const rHand = new THREE.Mesh(handGeo, sharedMaterial);
-    rHand.position.set(armOffsetX, shoulderY - upperArmLength - lowerArmLength - 0.06, 0);
-    group.add(rHand);
+    const rAnklePivot = new THREE.Object3D();
+    rAnklePivot.position.set(0, -lowerLegLength, 0);
+    rKneePivot.add(rAnklePivot);
+    const rFoot = new THREE.Mesh(footGeo, sharedMaterial);
+    rFoot.position.set(0, -0.08 / 2, 0.12);
+    rAnklePivot.add(rFoot);
+
+    // (Manos antiguas eliminadas)
 
     // Centrar pivote XZ
     const bbox = new THREE.Box3().setFromObject(group);
@@ -507,14 +566,20 @@ export class ArtShooterGame {
 
     // Guardar referencias para animación
     group.userData.limbs = {
-      lUpperArm,
-      lLowerArm,
-      rUpperArm,
-      rLowerArm,
-      lUpperLeg,
-      lLowerLeg,
-      rUpperLeg,
-      rLowerLeg,
+      // pivotes
+      lShoulderPivot,
+      rShoulderPivot,
+      lElbowPivot,
+      rElbowPivot,
+      lWristPivot,
+      rWristPivot,
+      lHipPivot,
+      rHipPivot,
+      lKneePivot,
+      rKneePivot,
+      lAnklePivot,
+      rAnklePivot,
+      // partes
       shoulders,
       pelvis,
       torso,
@@ -524,9 +589,7 @@ export class ArtShooterGame {
     // Inicializar estado de animación
     this.animationStates.set(group, {
       t: Math.random() * Math.PI * 2, // fase aleatoria
-      speed: 1 + Math.random() * 0.5,
-      ampArm: 0.5,
-      ampLeg: 0.5,
+      speed: GAME_CONFIG.animation.speedBase + (Math.random() - 0.5) * 2 * GAME_CONFIG.animation.speedJitter,
       baseY: group.position.y,
     });
 
@@ -823,17 +886,21 @@ export class ArtShooterGame {
       return sz;
     });
 
-    const margin = 0.6;
-    const spacing = maxWidth + margin;
-    const positionsX = [-spacing, 0, spacing];
+    // Posicionar en círculo alrededor de la cámara
+    const radius = GAME_CONFIG.orbit.radius;
     const baseZ = -3.5;
+    const baseAngle = Math.random() * Math.PI * 2;
+    const angles = [baseAngle, baseAngle + (2*Math.PI/3), baseAngle + (4*Math.PI/3)];
 
     models.forEach((m, i) => {
       const h = sizes[i].y || maxHeight;
-      m.position.set(positionsX[i], h / 2 + 0.02, 0);
+      const angle = angles[i];
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      m.position.set(x, h / 2 + 0.02, z);
       rowGroup.add(m);
     });
-    rowGroup.position.z = baseZ;
+    // El grupo se ancla en el origen; cada modelo sigue su propia órbita en animate()
 
     // Rotación y animación independiente por modelo
     models.forEach((m) => {
@@ -844,6 +911,8 @@ export class ArtShooterGame {
     this.scene.add(rowGroup);
     this.rowGroup = rowGroup;
     this.targets = models;
+    // Guardar ángulo orbital inicial en userData para cada modelo
+    models.forEach((m, i) => { m.userData.orbitAngle = angles[i]; });
   }
 
   handlePrimaryClick(e) {
@@ -947,10 +1016,9 @@ export class ArtShooterGame {
       });
 
       const n = GAME_CONFIG.explosion.shardsPerModel;
-      for (let i = 0; i < n; i++) {
-        const r = THREE.MathUtils.lerp(GAME_CONFIG.explosion.shardSizeMin, GAME_CONFIG.explosion.shardSizeMax, Math.random());
-        const geom = new THREE.TetrahedronGeometry(r, 0);
-        const mat = new THREE.MeshStandardMaterial({
+      // Material compartido para los fragmentos
+      if (!this.explosionMaterial) {
+        this.explosionMaterial = new THREE.MeshStandardMaterial({
           color: 0xffffff,
           roughness: 0.85,
           metalness: 0.05,
@@ -959,8 +1027,16 @@ export class ArtShooterGame {
           opacity: 1,
           map: sampleMap || null,
         });
+      } else {
+        this.explosionMaterial.map = sampleMap || null;
+        this.explosionMaterial.needsUpdate = true;
+      }
 
-        const shard = new THREE.Mesh(geom, mat);
+      for (let i = 0; i < n; i++) {
+        const r = THREE.MathUtils.lerp(GAME_CONFIG.explosion.shardSizeMin, GAME_CONFIG.explosion.shardSizeMax, Math.random());
+        const geom = new THREE.TetrahedronGeometry(r, 0);
+
+        const shard = new THREE.Mesh(geom, this.explosionMaterial);
         // Posición inicial aleatoria dentro del bbox (mundo)
         shard.position.set(
           THREE.MathUtils.lerp(bbox.min.x, bbox.max.x, Math.random()),
@@ -1234,40 +1310,73 @@ export class ArtShooterGame {
         m.rotation.y += s.y * scale;
         m.rotation.z += s.z * scale;
       }
+      // Órbita lenta alrededor del origen (cámara cercana al origen)
+      if (m.userData && typeof m.userData.orbitAngle === 'number') {
+        const dAngle = GAME_CONFIG.orbit.speed * delta;
+        m.userData.orbitAngle += dAngle;
+        const r = GAME_CONFIG.orbit.radius;
+        const angle = m.userData.orbitAngle;
+        const baseY = m.userData.baseY || m.position.y;
+        m.position.x = Math.cos(angle) * r;
+        m.position.z = Math.sin(angle) * r;
+        // mantener bob vertical adicional más abajo
+        if (!m.userData.baseY) m.userData.baseY = baseY;
+      }
       // Animación de marcha simple
       const anim = this.animationStates.get(m);
       if (anim && m.userData && m.userData.limbs) {
         anim.t += delta * anim.speed;
+        const { amplitudes } = GAME_CONFIG.animation;
         const {
-          lUpperArm,
-          rUpperArm,
-          lLowerArm,
-          rLowerArm,
-          lUpperLeg,
-          rUpperLeg,
-          lLowerLeg,
-          rLowerLeg,
+          lShoulderPivot,
+          rShoulderPivot,
+          lElbowPivot,
+          rElbowPivot,
+          lHipPivot,
+          rHipPivot,
+          lKneePivot,
+          rKneePivot,
+          torso,
+          pelvis,
+          head,
         } = m.userData.limbs;
 
-        const swingArm = Math.sin(anim.t) * anim.ampArm;
-        const swingLeg = Math.sin(anim.t) * anim.ampLeg;
+        const swingArm = Math.sin(anim.t) * amplitudes.arm;
+        const swingLeg = Math.sin(anim.t) * amplitudes.leg;
 
-        // Rotaciones alrededor del eje Z para brazos y X para piernas (ajuste low poly)
-        if (lUpperArm) lUpperArm.rotation.z = swingArm;
-        if (rUpperArm) rUpperArm.rotation.z = -swingArm;
-        if (lLowerArm) lLowerArm.rotation.z = -swingArm * 0.5;
-        if (rLowerArm) rLowerArm.rotation.z = swingArm * 0.5;
+        // Hombros adelante/atrás (eje Z da un look gráfico, eje X más anatómico)
+        if (lShoulderPivot) lShoulderPivot.rotation.x = swingArm;
+        if (rShoulderPivot) rShoulderPivot.rotation.x = -swingArm;
+        // Codos pliegan en fase opuesta parcial
+        if (lElbowPivot) lElbowPivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
+        if (rElbowPivot) rElbowPivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
+        // Muñecas: compensación suave y pequeña torsión para evitar rigidez
+        if (m.userData.limbs.lWristPivot) m.userData.limbs.lWristPivot.rotation.z = Math.sin(anim.t * 1.2) * 0.15;
+        if (m.userData.limbs.rWristPivot) m.userData.limbs.rWristPivot.rotation.z = -Math.sin(anim.t * 1.2) * 0.15;
 
-        if (lUpperLeg) lUpperLeg.rotation.x = -swingLeg;
-        if (rUpperLeg) rUpperLeg.rotation.x = swingLeg;
-        if (lLowerLeg) lLowerLeg.rotation.x = Math.max(0, swingLeg * 0.5);
-        if (rLowerLeg) rLowerLeg.rotation.x = Math.max(0, -swingLeg * 0.5);
+        // Caderas
+        if (lHipPivot) lHipPivot.rotation.x = -swingLeg;
+        if (rHipPivot) rHipPivot.rotation.x = swingLeg;
+        // Rodillas con clamp para evitar hiperextensión hacia atrás
+        if (lKneePivot) lKneePivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
+        if (rKneePivot) rKneePivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
 
-        // Sutil bob vertical del cuerpo completo
-        const bob = Math.abs(Math.cos(anim.t)) * 0.02;
-        const baseY = (m.userData.baseY || m.position.y);
-        m.position.y = baseY + bob;
-        if (!m.userData.baseY) m.userData.baseY = baseY;
+        // Tobillos: inclinar el pie según fase para tocar el suelo de forma creíble
+        const footPitchL = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4)) * 0.35; // despega la punta al avanzar
+        const footPitchR = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4 + Math.PI)) * 0.35;
+        if (m.userData.limbs.lAnklePivot) m.userData.limbs.lAnklePivot.rotation.x = footPitchL;
+        if (m.userData.limbs.rAnklePivot) m.userData.limbs.rAnklePivot.rotation.x = footPitchR;
+
+        // Torsión leve de pelvis/torso para contrabalance
+        if (pelvis) pelvis.rotation.y = -swingLeg * amplitudes.hipTwist;
+        if (torso) torso.rotation.y = swingArm * amplitudes.torsoTwist;
+        if (head) head.rotation.y = -swingArm * amplitudes.torsoTwist * 0.6;
+
+        // Bob vertical
+        const bob = Math.max(0, Math.cos(anim.t)) * amplitudes.bob; // solo baja en la fase de apoyo
+        const baseY2 = (m.userData.baseY || m.position.y);
+        m.position.y = baseY2 + bob;
+        if (!m.userData.baseY) m.userData.baseY = baseY2;
       }
     });
     // Actualizar explosiones

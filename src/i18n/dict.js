@@ -10,6 +10,7 @@ export const dict = {
       motion: 'MOTION',
       models3d: '3D MODELS',
       experimental: 'EXPERIMENTAL',
+      texts: 'TEXTS',
       contact: 'CONTACT-ABOUT',
     },
     home: {
@@ -48,6 +49,7 @@ export const dict = {
       motion: 'ANIMACIÓN',
       models3d: 'MODELOS 3D',
       experimental: 'EXPERIMENTAL',
+      texts: 'TEXTOS',
       contact: 'CONTACTO-ACERCA',
     },
     home: {

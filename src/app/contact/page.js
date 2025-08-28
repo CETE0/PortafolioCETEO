@@ -48,7 +48,37 @@ export default function Contact() {
           period: '2024',
           title: 'Exposición TOMA#2',
           institution: 'Producción y Curaduría',
-        }
+        },
+        {
+          period: '2024',
+          title: 'Ayudante Pregrado - Fotogrametria y Modelado 3D',
+          institution: 'Pontificia Universidad Católica de Chile',
+        },
+        {
+          period: '2025',
+          title: 'Ayudante Laboratorio LAITEC',
+          institution: 'Pontificia Universidad Católica de Chile',
+        },
+        {
+          period: '2025',
+          title: 'Ayudante Posgrado - Laboratorio de Creación Interdisciplinaria en Artes y Tecnología',
+          institution: 'Pontificia Universidad Católica de Chile',
+        },
+        {
+          period: '2025',
+          title: 'Exposición TOMA#3',
+          institution: 'Producción y Curaduría',
+        },
+        {
+          period: '2025',
+          title: 'Exposición TOMA#4',
+          institution: 'Producción y Curaduría',
+        },
+        {
+          period: '2025',
+          title: '17 Bienal de Artes Mediales de Santiago',
+          institution: 'Colectivo TOMA - Participante',
+        },
       ];
     }
     return [
@@ -81,7 +111,37 @@ export default function Contact() {
         period: '2024',
         title: 'TOMA#2 Exhibition',
         institution: 'Production & Curation',
-      }
+      },
+      {
+        period: '2024',
+        title: 'Undergraduate Teaching Assistant - Photogrammetry and 3D Modeling',
+        institution: 'Pontificia Universidad Católica de Chile',
+      },
+      {
+        period: '2025',
+        title: 'Laboratory Assistant LAITEC',
+        institution: 'Pontificia Universidad Católica de Chile',
+      },
+      {
+        period: '2025',
+        title: 'Graduate Teaching Assistant - Laboratory of Interdisciplinary Creation in Arts and Technology',
+        institution: 'Pontificia Universidad Católica de Chile',
+      },
+      {
+        period: '2025',
+        title: 'TOMA#3 Exhibition',
+        institution: 'Production & Curation',
+      },
+      {
+        period: '2025',
+        title: 'TOMA#4 Exhibition',
+        institution: 'Production & Curation',
+      },
+      {
+        period: '2025',
+        title: '17th Santiago Media Arts Biennial',
+        institution: 'TOMA Collective - Participant',
+      },
     ];
   }, [lang]);
 

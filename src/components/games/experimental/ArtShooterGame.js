@@ -654,6 +654,7 @@ export class ArtShooterGame {
       // Modo móvil: activo por defecto y mira centrada con overlay propio
       this.isActive = true;
       this.ensureMobileCrosshair();
+      this.showMobileCrosshair();
       // Sonido se iniciará en la primera interacción táctil
     }
 
@@ -1156,7 +1157,10 @@ export class ArtShooterGame {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     if (this.controls?.isLocked) this.centerCustomCursor();
-    if (this.isTouchDevice) this.ensureMobileCrosshair();
+    if (this.isTouchDevice) {
+      this.ensureMobileCrosshair();
+      if (this.isActive) this.showMobileCrosshair();
+    }
   }
 
   centerCustomCursor() {
@@ -1170,12 +1174,54 @@ export class ArtShooterGame {
   }
 
   ensureMobileCrosshair() {
-    // Ya no se muestra mira en dispositivos táctiles
-    if (this.mobileCrosshairEl && this.mobileCrosshairEl.parentNode) {
-      this.mobileCrosshairEl.parentNode.removeChild(this.mobileCrosshairEl);
-      this.mobileCrosshairEl = null;
-    }
-    return;
+    if (!this.isTouchDevice) return;
+    if (this.mobileCrosshairEl && this.mobileCrosshairEl.parentNode) return;
+
+    const el = document.createElement('div');
+    el.style.position = 'absolute';
+    el.style.left = '50%';
+    el.style.top = '50%';
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.width = '20px';
+    el.style.height = '20px';
+    el.style.zIndex = '1000';
+    el.style.pointerEvents = 'none';
+
+    // Cruz idéntica al cursor custom (líneas vertical y horizontal)
+    const crosshair = document.createElement('div');
+    crosshair.style.position = 'relative';
+    crosshair.style.width = '100%';
+    crosshair.style.height = '100%';
+
+    // Línea vertical (before)
+    const vertical = document.createElement('div');
+    vertical.style.content = '';
+    vertical.style.position = 'absolute';
+    vertical.style.left = '50%';
+    vertical.style.top = '0';
+    vertical.style.width = '2px';
+    vertical.style.height = '100%';
+    vertical.style.backgroundColor = 'black';
+    vertical.style.transform = 'translateX(-50%)';
+
+    // Línea horizontal (after)
+    const horizontal = document.createElement('div');
+    horizontal.style.content = '';
+    horizontal.style.position = 'absolute';
+    horizontal.style.left = '0';
+    horizontal.style.top = '50%';
+    horizontal.style.width = '100%';
+    horizontal.style.height = '2px';
+    horizontal.style.backgroundColor = 'black';
+    horizontal.style.transform = 'translateY(-50%)';
+
+    crosshair.appendChild(vertical);
+    crosshair.appendChild(horizontal);
+    el.appendChild(crosshair);
+
+    this.container.style.position = 'relative';
+    this.container.appendChild(el);
+    this.mobileCrosshairEl = el;
   }
 
   ensureAudioStarted() {
@@ -1242,6 +1288,14 @@ export class ArtShooterGame {
 
   hideDesktopCrosshair() {
     if (this.desktopCrosshairEl) this.desktopCrosshairEl.style.display = 'none';
+  }
+
+  showMobileCrosshair() {
+    if (this.mobileCrosshairEl) this.mobileCrosshairEl.style.display = 'block';
+  }
+
+  hideMobileCrosshair() {
+    if (this.mobileCrosshairEl) this.mobileCrosshairEl.style.display = 'none';
   }
 
   createDesktopOverlays() {
@@ -1499,6 +1553,7 @@ export class ArtShooterGame {
     if (this.ui && this.ui.parentNode) this.ui.parentNode.removeChild(this.ui);
     if (this.mobileCrosshairEl && this.mobileCrosshairEl.parentNode) {
       this.mobileCrosshairEl.parentNode.removeChild(this.mobileCrosshairEl);
+      this.mobileCrosshairEl = null;
     }
     if (this.pmremGenerator) {
       this.pmremGenerator.dispose();

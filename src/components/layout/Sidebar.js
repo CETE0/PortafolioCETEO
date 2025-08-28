@@ -52,6 +52,12 @@ const Sidebar = () => {
       projects: [
         'dopa'
       ]
+    },
+    texts: {
+      name: t('sidebar.texts'),
+      projects: [
+        'statement'
+      ]
     }
   };
 

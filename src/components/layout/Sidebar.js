@@ -50,6 +50,7 @@ const Sidebar = () => {
     experimental: {
       name: t('sidebar.experimental'),
       projects: [
+        'medio condoro',
         'dopa'
       ]
     },
@@ -92,31 +93,60 @@ const Sidebar = () => {
               
               {activeCategory === key && (
                 <div className={`space-y-1 transition-all duration-300 w-full flex flex-col items-center md:items-start ${activeCategory === key ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}` }>
-                  {category.projects.map((project) => (
-                    <Link
-                      key={project}
-                      href={`/${key}/${project}`}
-                      className={`block text-sm text-center md:text-left ${
-                        pathname === `/${key}/${project}`
-                          ? 'text-red-500'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                      onClick={() => {
-                        // Close mobile menu when a link is clicked
-                        const sidebar = document.getElementById('mobile-sidebar');
-                        if (sidebar) {
-                          sidebar.classList.add('translate-x-full');
-                          sidebar.classList.remove('translate-x-0');
-                        }
-                        // Notify MobileMenu to reset state
-                        if (typeof window !== 'undefined') {
-                          window.dispatchEvent(new Event('sidebarClosed'));
-                        }
-                      }}
-                    >
-                      {project.replace(/-/g, ' ')}
-                    </Link>
-                  ))}
+                  {category.projects.map((project) => {
+                    // Handle external link for "medio condoro"
+                    if (project === 'medio condoro') {
+                      return (
+                        <a
+                          key={project}
+                          href="https://www.maquinacondor.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-sm text-center md:text-left text-gray-600 hover:text-gray-900"
+                          onClick={() => {
+                            // Close mobile menu when a link is clicked
+                            const sidebar = document.getElementById('mobile-sidebar');
+                            if (sidebar) {
+                              sidebar.classList.add('translate-x-full');
+                              sidebar.classList.remove('translate-x-0');
+                            }
+                            // Notify MobileMenu to reset state
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(new Event('sidebarClosed'));
+                            }
+                          }}
+                        >
+                          {project.replace(/-/g, ' ')}
+                        </a>
+                      );
+                    }
+                    // Regular internal link for other projects
+                    return (
+                      <Link
+                        key={project}
+                        href={`/${key}/${project}`}
+                        className={`block text-sm text-center md:text-left ${
+                          pathname === `/${key}/${project}`
+                            ? 'text-red-500'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        onClick={() => {
+                          // Close mobile menu when a link is clicked
+                          const sidebar = document.getElementById('mobile-sidebar');
+                          if (sidebar) {
+                            sidebar.classList.add('translate-x-full');
+                            sidebar.classList.remove('translate-x-0');
+                          }
+                          // Notify MobileMenu to reset state
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('sidebarClosed'));
+                          }
+                        }}
+                      >
+                        {project.replace(/-/g, ' ')}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

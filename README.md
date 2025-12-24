@@ -1,5 +1,4 @@
-CETEO 2025.
-
-Nada reservado
-
-una web sin visitas.
+Los números tienen forma de hombre. 
+Hasta el cero tiene forma de hombre.
+   
+Roberto Juarroz, *Poesía vertical* (1975)   

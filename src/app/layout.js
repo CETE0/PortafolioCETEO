@@ -63,7 +63,7 @@ export default function RootLayout({ children }) {
           </div>
 
           {/* Mobile Header with centered hamburger */}
-          <div className="md:hidden fixed top-0 left-0 w-full h-16 bg-white z-50 flex items-center justify-between px-4">
+          <div className="md:hidden fixed top-0 left-0 w-full h-16 bg-white flex items-center justify-between px-4" style={{ zIndex: 10002 }}>
             <div className="flex items-center gap-3 flex-nowrap min-w-0">
               <Link href="/" className="flex items-center min-w-0">
                 <h1 className="text-xl font-bold text-red-600 whitespace-nowrap">CETEO</h1>
@@ -79,7 +79,8 @@ export default function RootLayout({ children }) {
           {/* Mobile Sidebar (restaurado) */}
           <div 
             id="mobile-sidebar"
-            className="md:hidden fixed inset-y-0 right-0 w-full bg-white transform translate-x-full transition-transform duration-300 ease-in-out z-40 h-full flex flex-col justify-center"
+            className="md:hidden fixed inset-y-0 right-0 w-full bg-white transform translate-x-full transition-transform duration-300 ease-in-out h-full flex flex-col justify-center"
+            style={{ zIndex: 10001 }}
           >
             <Sidebar />
           </div>

@@ -1,6 +1,19 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { projects } from '@/lib/projects';
+import { 
+  CRTShader, 
+  DitheringShader, 
+  defaultCRTConfig, 
+  defaultDitheringConfig,
+  presets 
+} from './PostProcessingShaders';
+
+// Debug mode - set to false for production
+const DEBUG_POST_PROCESSING = false;
 
 // Parámetros editables del visualizador y escena
 const GAME_CONFIG = {
@@ -336,6 +349,14 @@ export class ArtShooterGame {
     this.lastShotTime = 0;
     this.clock = new THREE.Clock();
     THREE.Cache.enabled = true;
+
+    // Post-processing
+    this.composer = null;
+    this.crtPass = null;
+    this.ditheringPass = null;
+    this.crtConfig = { ...defaultCRTConfig };
+    this.ditheringConfig = { ...defaultDitheringConfig };
+    this.debugGui = null;
 
     this.init();
   }
@@ -719,6 +740,12 @@ export class ArtShooterGame {
     if (!this.isTouchDevice) this.createDesktopOverlays();
     this.spawnSingleTarget();
     // Contador desactivado: no se crea UI de score
+
+    // Inicializar post-processing
+    this.initPostProcessing();
+    if (DEBUG_POST_PROCESSING) {
+      this.initDebugGUI();
+    }
 
     window.addEventListener('resize', this.onResize);
     // Blur/Focus: pausar y reanudar música
@@ -1156,6 +1183,22 @@ export class ArtShooterGame {
     this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    
+    // Actualizar resolución del post-processing
+    if (this.composer) {
+      this.composer.setSize(this.container.clientWidth, this.container.clientHeight);
+      const resolution = new THREE.Vector2(
+        this.container.clientWidth * this.renderer.getPixelRatio(),
+        this.container.clientHeight * this.renderer.getPixelRatio()
+      );
+      if (this.crtPass) {
+        this.crtPass.uniforms.resolution.value = resolution;
+      }
+      if (this.ditheringPass) {
+        this.ditheringPass.uniforms.resolution.value = resolution;
+      }
+    }
+    
     if (this.controls?.isLocked) this.centerCustomCursor();
     if (this.isTouchDevice) {
       this.ensureMobileCrosshair();
@@ -1352,6 +1395,300 @@ export class ArtShooterGame {
     if (this.desktopEscHintEl) this.desktopEscHintEl.style.display = 'none';
   }
 
+  // ============ POST-PROCESSING ============
+  
+  initPostProcessing() {
+    // Crear composer
+    this.composer = new EffectComposer(this.renderer);
+    
+    // Render pass (escena base)
+    const renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(renderPass);
+    
+    // CRT pass
+    this.crtPass = new ShaderPass(CRTShader);
+    this.crtPass.uniforms.resolution.value = new THREE.Vector2(
+      this.container.clientWidth * this.renderer.getPixelRatio(),
+      this.container.clientHeight * this.renderer.getPixelRatio()
+    );
+    this.crtPass.enabled = this.crtConfig.enabled;
+    this.composer.addPass(this.crtPass);
+    
+    // Dithering pass
+    this.ditheringPass = new ShaderPass(DitheringShader);
+    this.ditheringPass.uniforms.resolution.value = new THREE.Vector2(
+      this.container.clientWidth * this.renderer.getPixelRatio(),
+      this.container.clientHeight * this.renderer.getPixelRatio()
+    );
+    this.ditheringPass.enabled = this.ditheringConfig.enabled;
+    this.composer.addPass(this.ditheringPass);
+    
+    // Aplicar configuración inicial
+    this.updateCRTUniforms();
+    this.updateDitheringUniforms();
+  }
+  
+  updateCRTUniforms() {
+    if (!this.crtPass) return;
+    const u = this.crtPass.uniforms;
+    const c = this.crtConfig;
+    
+    this.crtPass.enabled = c.enabled;
+    
+    u.scanlineEnabled.value = c.scanlineEnabled;
+    u.scanlineIntensity.value = c.scanlineIntensity;
+    u.scanlineCount.value = c.scanlineCount;
+    u.scanlineSpeed.value = c.scanlineSpeed;
+    
+    u.chromaticEnabled.value = c.chromaticEnabled;
+    u.chromaticIntensity.value = c.chromaticIntensity;
+    
+    u.distortionEnabled.value = c.distortionEnabled;
+    u.distortionAmount.value = c.distortionAmount;
+    
+    u.vignetteEnabled.value = c.vignetteEnabled;
+    u.vignetteIntensity.value = c.vignetteIntensity;
+    u.vignetteRoundness.value = c.vignetteRoundness;
+    
+    u.phosphorEnabled.value = c.phosphorEnabled;
+    u.phosphorIntensity.value = c.phosphorIntensity;
+    
+    u.flickerEnabled.value = c.flickerEnabled;
+    u.flickerIntensity.value = c.flickerIntensity;
+    
+    u.noiseEnabled.value = c.noiseEnabled;
+    u.noiseIntensity.value = c.noiseIntensity;
+    
+    u.brightness.value = c.brightness;
+    u.contrast.value = c.contrast;
+    u.saturation.value = c.saturation;
+    
+    u.glowEnabled.value = c.glowEnabled;
+    u.glowIntensity.value = c.glowIntensity;
+  }
+  
+  updateDitheringUniforms() {
+    if (!this.ditheringPass) return;
+    const u = this.ditheringPass.uniforms;
+    const c = this.ditheringConfig;
+    
+    this.ditheringPass.enabled = c.enabled;
+    
+    u.ditheringEnabled.value = c.ditheringEnabled;
+    u.ditheringType.value = c.ditheringType;
+    u.colorLevels.value = c.colorLevels;
+    u.ditherStrength.value = c.ditherStrength;
+    
+    u.paletteEnabled.value = c.paletteEnabled;
+    u.paletteSize.value = c.paletteSize;
+    
+    u.pixelateEnabled.value = c.pixelateEnabled;
+    u.pixelSize.value = c.pixelSize;
+  }
+  
+  applyPreset(presetName) {
+    const preset = presets[presetName];
+    if (!preset) return;
+    
+    if (preset.crt) {
+      Object.assign(this.crtConfig, preset.crt);
+      this.updateCRTUniforms();
+    }
+    if (preset.dithering) {
+      Object.assign(this.ditheringConfig, preset.dithering);
+      this.updateDitheringUniforms();
+    }
+    
+    // Actualizar GUI si existe
+    if (this.debugGui) {
+      this.debugGui.controllersRecursive().forEach(c => c.updateDisplay());
+    }
+  }
+  
+  async initDebugGUI() {
+    try {
+      // Importar lil-gui dinámicamente
+      const { GUI } = await import('lil-gui');
+      
+      this.debugGui = new GUI({ 
+        title: '🎮 Post-Processing Debug',
+        width: 320
+      });
+      this.debugGui.domElement.style.position = 'absolute';
+      this.debugGui.domElement.style.top = '10px';
+      this.debugGui.domElement.style.right = '10px';
+      this.debugGui.domElement.style.zIndex = '9999';
+      
+      // Presets
+      const presetNames = Object.keys(presets);
+      const presetObj = { preset: 'CRT Suave' };
+      this.debugGui.add(presetObj, 'preset', presetNames)
+        .name('📋 Preset')
+        .onChange((v) => this.applyPreset(v));
+      
+      // ===== CRT FOLDER =====
+      const crtFolder = this.debugGui.addFolder('📺 CRT Effects');
+      crtFolder.add(this.crtConfig, 'enabled')
+        .name('Activar CRT')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Scanlines
+      const scanFolder = crtFolder.addFolder('Scanlines');
+      scanFolder.add(this.crtConfig, 'scanlineEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      scanFolder.add(this.crtConfig, 'scanlineIntensity', 0, 0.5, 0.01)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      scanFolder.add(this.crtConfig, 'scanlineCount', 100, 800, 10)
+        .name('Cantidad')
+        .onChange(() => this.updateCRTUniforms());
+      scanFolder.add(this.crtConfig, 'scanlineSpeed', 0, 2, 0.1)
+        .name('Velocidad (rolling)')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Chromatic Aberration
+      const chromaFolder = crtFolder.addFolder('Chromatic Aberration');
+      chromaFolder.add(this.crtConfig, 'chromaticEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      chromaFolder.add(this.crtConfig, 'chromaticIntensity', 0, 0.02, 0.001)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Distortion
+      const distortFolder = crtFolder.addFolder('Barrel Distortion');
+      distortFolder.add(this.crtConfig, 'distortionEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      distortFolder.add(this.crtConfig, 'distortionAmount', 0, 0.4, 0.01)
+        .name('Curvatura')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Vignette
+      const vignetteFolder = crtFolder.addFolder('Vignette');
+      vignetteFolder.add(this.crtConfig, 'vignetteEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      vignetteFolder.add(this.crtConfig, 'vignetteIntensity', 0, 1, 0.05)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      vignetteFolder.add(this.crtConfig, 'vignetteRoundness', 0.1, 1, 0.05)
+        .name('Redondez')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Phosphor
+      const phosphorFolder = crtFolder.addFolder('Phosphor RGB');
+      phosphorFolder.add(this.crtConfig, 'phosphorEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      phosphorFolder.add(this.crtConfig, 'phosphorIntensity', 0, 1, 0.05)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Flicker
+      const flickerFolder = crtFolder.addFolder('Flicker');
+      flickerFolder.add(this.crtConfig, 'flickerEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      flickerFolder.add(this.crtConfig, 'flickerIntensity', 0, 0.15, 0.01)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Noise
+      const noiseFolder = crtFolder.addFolder('Noise');
+      noiseFolder.add(this.crtConfig, 'noiseEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      noiseFolder.add(this.crtConfig, 'noiseIntensity', 0, 0.3, 0.01)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Glow
+      const glowFolder = crtFolder.addFolder('Glow');
+      glowFolder.add(this.crtConfig, 'glowEnabled')
+        .name('Activar')
+        .onChange(() => this.updateCRTUniforms());
+      glowFolder.add(this.crtConfig, 'glowIntensity', 0, 0.5, 0.05)
+        .name('Intensidad')
+        .onChange(() => this.updateCRTUniforms());
+      
+      // Color adjustments
+      const colorFolder = crtFolder.addFolder('Color');
+      colorFolder.add(this.crtConfig, 'brightness', 0.5, 1.5, 0.05)
+        .name('Brillo')
+        .onChange(() => this.updateCRTUniforms());
+      colorFolder.add(this.crtConfig, 'contrast', 0.5, 2, 0.05)
+        .name('Contraste')
+        .onChange(() => this.updateCRTUniforms());
+      colorFolder.add(this.crtConfig, 'saturation', 0, 2, 0.05)
+        .name('Saturación')
+        .onChange(() => this.updateCRTUniforms());
+      
+      crtFolder.open();
+      
+      // ===== DITHERING FOLDER =====
+      const ditherFolder = this.debugGui.addFolder('🎨 Dithering');
+      ditherFolder.add(this.ditheringConfig, 'enabled')
+        .name('Activar Dithering')
+        .onChange(() => this.updateDitheringUniforms());
+      
+      const ditherTypes = { 'Bayer 4x4': 0, 'Bayer 8x8': 1, 'Blue Noise': 2 };
+      ditherFolder.add(this.ditheringConfig, 'ditheringType', ditherTypes)
+        .name('Patrón')
+        .onChange(() => this.updateDitheringUniforms());
+      ditherFolder.add(this.ditheringConfig, 'colorLevels', 2, 32, 1)
+        .name('Niveles de color')
+        .onChange(() => this.updateDitheringUniforms());
+      ditherFolder.add(this.ditheringConfig, 'ditherStrength', 0, 2, 0.1)
+        .name('Fuerza')
+        .onChange(() => this.updateDitheringUniforms());
+      
+      // Palette
+      const paletteFolder = ditherFolder.addFolder('Paleta');
+      paletteFolder.add(this.ditheringConfig, 'paletteEnabled')
+        .name('Reducir paleta')
+        .onChange(() => this.updateDitheringUniforms());
+      paletteFolder.add(this.ditheringConfig, 'paletteSize', 2, 32, 1)
+        .name('Colores')
+        .onChange(() => this.updateDitheringUniforms());
+      
+      // Pixelation
+      const pixelFolder = ditherFolder.addFolder('Pixelación');
+      pixelFolder.add(this.ditheringConfig, 'pixelateEnabled')
+        .name('Pixelar')
+        .onChange(() => this.updateDitheringUniforms());
+      pixelFolder.add(this.ditheringConfig, 'pixelSize', 1, 16, 1)
+        .name('Tamaño pixel')
+        .onChange(() => this.updateDitheringUniforms());
+      
+      // Export button
+      const exportObj = {
+        exportConfig: () => {
+          const config = {
+            crt: { ...this.crtConfig },
+            dithering: { ...this.ditheringConfig }
+          };
+          console.log('=== POST-PROCESSING CONFIG ===');
+          console.log(JSON.stringify(config, null, 2));
+          console.log('==============================');
+          
+          // Copiar al portapapeles
+          navigator.clipboard?.writeText(JSON.stringify(config, null, 2))
+            .then(() => alert('Configuración copiada al portapapeles!'))
+            .catch(() => alert('Config impresa en consola (F12)'));
+        }
+      };
+      this.debugGui.add(exportObj, 'exportConfig').name('📤 Exportar Config');
+      
+      // Aplicar preset inicial
+      this.applyPreset('CRT Suave');
+      
+    } catch (err) {
+      console.warn('Debug GUI no disponible:', err);
+    }
+  }
+
   animate() {
     if (!this.scene || !this.camera) return;
     requestAnimationFrame(() => this.animate());
@@ -1468,11 +1805,21 @@ export class ArtShooterGame {
         }
       }
     }
+    // Actualizar uniforms de tiempo para efectos animados
+    if (this.crtPass && this.crtPass.uniforms.time) {
+      this.crtPass.uniforms.time.value = performance.now() / 1000;
+    }
+    
     // Simple frame skip adaptativo en móvil si el delta sube mucho
     if (this.isTouchDevice && delta > 0.035 && Math.random() < 0.33) {
       // salta este frame ocasionalmente para bajar carga
     } else {
-      this.renderer.render(this.scene, this.camera);
+      // Usar composer si está disponible, sino renderer normal
+      if (this.composer && (this.crtConfig.enabled || this.ditheringConfig.enabled)) {
+        this.composer.render();
+      } else {
+        this.renderer.render(this.scene, this.camera);
+      }
     }
   }
 
@@ -1574,6 +1921,24 @@ export class ArtShooterGame {
     }
     if (this.onWindowBlur) window.removeEventListener('blur', this.onWindowBlur);
     if (this.onWindowFocus) window.removeEventListener('focus', this.onWindowFocus);
+    
+    // Limpiar post-processing
+    if (this.composer) {
+      this.composer.dispose?.();
+      this.composer = null;
+    }
+    if (this.crtPass) {
+      this.crtPass = null;
+    }
+    if (this.ditheringPass) {
+      this.ditheringPass = null;
+    }
+    
+    // Limpiar debug GUI
+    if (this.debugGui) {
+      this.debugGui.destroy();
+      this.debugGui = null;
+    }
   }
 }
 

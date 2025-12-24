@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import OptimizedImage from './OptimizedImage';
@@ -11,6 +11,84 @@ import ImageViewerModal from './ImageViewerModal';
 import { useImagePreloader } from '../../lib/imagePreloader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { projectTranslations } from '@/i18n/projects';
+
+// DVD-style bouncing preloader component
+function DVDPreloader({ text, isCompleted }) {
+  const containerRef = useRef(null);
+  const textRef = useRef(null);
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const velocityRef = useRef({ x: 2, y: 1.5 });
+  const animationRef = useRef(null);
+
+  const animate = useCallback(() => {
+    if (!containerRef.current || !textRef.current) return;
+
+    const container = containerRef.current.getBoundingClientRect();
+    const text = textRef.current.getBoundingClientRect();
+
+    setPosition(prev => {
+      let newX = prev.x + velocityRef.current.x;
+      let newY = prev.y + velocityRef.current.y;
+
+      // Bounce off walls
+      if (newX <= 0 || newX + text.width >= container.width) {
+        velocityRef.current.x *= -1;
+        newX = Math.max(0, Math.min(newX, container.width - text.width));
+      }
+      if (newY <= 0 || newY + text.height >= container.height) {
+        velocityRef.current.y *= -1;
+        newY = Math.max(0, Math.min(newY, container.height - text.height));
+      }
+
+      return { x: newX, y: newY };
+    });
+
+    animationRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => {
+    // Random initial velocity direction
+    velocityRef.current = {
+      x: (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random()),
+      y: (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 0.5)
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate]);
+
+  return (
+    <div 
+      ref={containerRef}
+      className="absolute inset-0 overflow-hidden pointer-events-none z-10"
+    >
+      <div
+        ref={textRef}
+        className="absolute"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+      >
+        <div className="flex items-center space-x-2">
+          <div className={`w-2 h-2 rounded-full ${
+            isCompleted ? 'bg-green-500' : 'bg-red-500'
+          }`}></div>
+          <span className={`font-['Press_Start_2P'] text-xs whitespace-nowrap ${
+            isCompleted ? 'text-green-500' : 'text-gray-500'
+          }`}>
+            {text}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const KickGame = dynamic(() => import('../games/KickGame'), {
   ssr: false,
@@ -255,24 +333,12 @@ export default function ProjectView({ content = [], title, category, projectId }
           </motion.div>
         </AnimatePresence>
 
-        {/* Advanced preloading indicator */}
+        {/* DVD-style bouncing preloading indicator */}
         {showPreloadIndicator && (
-          <div className={`absolute top-4 right-4 text-xs z-10 ${
-            preloadCompleted ? 'animate-preload-complete' : ''
-          }`}>
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                preloadCompleted 
-                  ? 'bg-green-500' 
-                  : 'bg-red-500 animate-pulse'
-              }`}></div>
-              <span className={`font-['Press_Start_2P'] transition-all duration-300 ${
-                preloadCompleted ? 'text-green-500' : 'text-gray-500'
-              }`}>
-                {t('project.preloading', { loaded: preloadStats.loaded, total: preloadStats.total })}
-              </span>
-            </div>
-          </div>
+          <DVDPreloader 
+            text={t('project.preloading', { loaded: preloadStats.loaded, total: preloadStats.total })}
+            isCompleted={preloadCompleted}
+          />
         )}
       </div>
 

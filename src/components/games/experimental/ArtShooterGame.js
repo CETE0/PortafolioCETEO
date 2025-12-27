@@ -161,10 +161,12 @@ class TextureManager {
 }
 
 export class ArtShooterGame {
-  constructor(container) {
+  constructor(container, options = {}) {
     if (!container) return;
 
     this.container = container;
+    this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
+    this.isNavigating = false; // Flag para evitar navegaciones múltiples
     this.scene = null;
     this.camera = null;
     this.renderer = null;
@@ -386,17 +388,30 @@ export class ArtShooterGame {
 
   getArtworkPaths() {
     // Recoger todas las imágenes definidas en src/lib/projects.js
-    const paths = new Set();
-    Object.values(projects).forEach(category => {
-      Object.values(category).forEach(project => {
+    // Devuelve objetos con { src, category, projectId } para poder navegar al proyecto
+    const artworks = [];
+    const seenPaths = new Set();
+    
+    Object.entries(projects).forEach(([categoryKey, category]) => {
+      Object.entries(category).forEach(([projectId, project]) => {
         (project.content || []).forEach(item => {
           if (item.type === 'image' && typeof item.src === 'string') {
-            paths.add(item.src);
+            // Evitar duplicados por ruta
+            if (!seenPaths.has(item.src)) {
+              seenPaths.add(item.src);
+              artworks.push({
+                src: item.src,
+                category: categoryKey,
+                projectId: projectId,
+                title: project.title || projectId
+              });
+            }
           }
         });
       });
     });
-    return Array.from(paths);
+    
+    return artworks;
   }
 
   getRandomGeometry() {
@@ -872,7 +887,7 @@ export class ArtShooterGame {
     }
     this.targets = [];
     this.currentTarget = null;
-    // Elegir 3 texturas únicas
+    // Elegir 3 artworks únicos (ahora son objetos con { src, category, projectId, title })
     const pickUnique = (arr, n) => {
       const res = [];
       const used = new Set();
@@ -883,8 +898,8 @@ export class ArtShooterGame {
       }
       return res;
     };
-    const urls = pickUnique(this.artworkPaths, 3);
-    const textures = await Promise.all(urls.map((u) => this.textureManager.load(u)));
+    const selectedArtworks = pickUnique(this.artworkPaths, 3);
+    const textures = await Promise.all(selectedArtworks.map((artwork) => this.textureManager.load(artwork.src)));
 
     // Material base compartido (sin mapa) para propiedades comunes
     if (!this.sharedMaterial) {
@@ -893,12 +908,20 @@ export class ArtShooterGame {
 
     // Crear grupo fila
     const rowGroup = new THREE.Group();
-    // Crear modelos y medir ancho máximo para espaciado uniforme
-    const models = textures.map((tex) => {
+    // Crear modelos y guardar info del proyecto para navegación
+    const models = textures.map((tex, index) => {
       const mat = this.sharedMaterial.clone();
       mat.map = tex || null;
       mat.needsUpdate = true;
       const m = this.createLowPolyHuman(mat);
+      // Guardar información del proyecto para navegación al destruir
+      const artworkInfo = selectedArtworks[index];
+      m.userData.projectInfo = {
+        category: artworkInfo.category,
+        projectId: artworkInfo.projectId,
+        title: artworkInfo.title,
+        src: artworkInfo.src
+      };
       return m;
     });
 
@@ -1142,6 +1165,10 @@ export class ArtShooterGame {
     }
     const idx = this.targets.indexOf(root);
     if (idx >= 0) this.targets.splice(idx, 1);
+    
+    // Obtener información del proyecto antes de destruir para navegación
+    const projectInfo = root.userData?.projectInfo;
+    
     // No disponer sharedMaterial; se reutiliza. Manejar grupos.
     // Crear explosión antes de eliminar
     this.createExplosionFromObject(root);
@@ -1178,6 +1205,14 @@ export class ArtShooterGame {
     }
     if (root.parent) root.parent.remove(root); else this.scene.remove(root);
     if (this.currentTarget === root) this.currentTarget = null;
+    
+    // Navegar al proyecto correspondiente de forma instantánea
+    // Solo navegar si no estamos ya navegando (evita navegaciones múltiples)
+    if (projectInfo && this.onNavigate && !this.isNavigating) {
+      this.isNavigating = true;
+      this.isActive = false; // Desactivar el juego para evitar más disparos
+      this.onNavigate(`/${projectInfo.category}/${projectInfo.projectId}`);
+    }
   }
 
   handleResize() {

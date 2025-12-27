@@ -184,6 +184,10 @@ export class ArtShooterGame {
     this.container = container;
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
+    this.hasEnteredPointerLockOnce = false; // Para distinguir estado inicial vs salir con ESC
+    this.redirectEnabled = true; // Gate general de redirección (desktop unlock / menú móvil)
+    this._onMobileMenuState = null;
+    this._wasActiveBeforeMobileMenu = null;
     this.scene = null;
     this.camera = null;
     this.renderer = null;
@@ -698,6 +702,8 @@ export class ArtShooterGame {
       this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
       this.controls.addEventListener('lock', () => {
         this.isActive = true;
+        this.hasEnteredPointerLockOnce = true;
+        this.redirectEnabled = true;
         this.ensureAudioStarted();
         this.centerCustomCursor();
         this.hideCustomCursor();
@@ -708,6 +714,8 @@ export class ArtShooterGame {
       });
       this.controls.addEventListener('unlock', () => {
         this.isActive = false;
+        // Al salir con ESC, deshabilitar redirección hasta volver a entrar en lock
+        this.redirectEnabled = false;
         this.stopAllSounds();
         this.showCustomCursor();
         this.hideDesktopCrosshair();
@@ -814,6 +822,22 @@ export class ArtShooterGame {
       this.container.addEventListener('touchend', this.onTouchEnd, { passive: false });
       this.container.addEventListener('touchcancel', this.onTouchEnd, { passive: false });
     }
+
+    // Si el menú móvil se abre, deshabilitar redirección y disparos para evitar navegaciones accidentales
+    this._onMobileMenuState = (ev) => {
+      const isOpen = !!ev?.detail?.isOpen;
+      if (!this.isTouchDevice) return; // solo aplica a móvil
+      if (isOpen) {
+        this._wasActiveBeforeMobileMenu = this.isActive;
+        this.isActive = false;
+        this.redirectEnabled = false;
+      } else {
+        this.isActive = this._wasActiveBeforeMobileMenu ?? true;
+        this._wasActiveBeforeMobileMenu = null;
+        this.redirectEnabled = true;
+      }
+    };
+    window.addEventListener('mobileMenuState', this._onMobileMenuState);
 
     this.animate();
 
@@ -995,7 +1019,37 @@ export class ArtShooterGame {
   }
 
   handlePrimaryClick(e) {
+    // Ignorar si ya estamos navegando (evita redirecciones “fantasma”)
+    if (this.isNavigating) return;
+
+    // Asegurar que el evento realmente viene del canvas del juego
+    if (!this.container || !this.container.contains(e.target)) return;
+    if (this.renderer?.domElement && e.target !== this.renderer.domElement) return;
+
     if (!this.controls?.isLocked) {
+      // Si ya se salió con ESC (unlock), NO permitir redirección estando desbloqueado.
+      // En ese estado, el click solo sirve para volver a entrar en modo juego (lock).
+      if (this.hasEnteredPointerLockOnce && !this.redirectEnabled) {
+        this.centerCustomCursor();
+        this.ensureAudioStarted();
+        this.controls.lock();
+        return;
+      }
+
+      // Verificar si el click impactó un modelo ANTES de bloquear el puntero
+      // Si es así, disparar directamente a ese modelo
+      const clickedModel = this.getModelAtScreenPosition(e.clientX, e.clientY);
+      if (clickedModel) {
+        this.ensureAudioStarted();
+        this.isActive = true; // Activar temporalmente para permitir el disparo
+        this.playShootOverlay();
+        this.playSound('kick');
+        this.destroyTarget(clickedModel);
+        if (navigator.vibrate) navigator.vibrate(20);
+        return;
+      }
+      
+      // Si no impactó ningún modelo, bloquear el puntero normalmente
       this.centerCustomCursor();
       this.ensureAudioStarted();
       this.controls.lock();
@@ -1003,6 +1057,40 @@ export class ArtShooterGame {
     }
     this.animateDesktopCrosshairClick();
     this.shoot();
+  }
+
+  // Obtener el modelo en una posición específica de la pantalla
+  getModelAtScreenPosition(clientX, clientY) {
+    if (!this.container || !this.camera || !this.targets?.length) return null;
+    
+    const rect = this.container.getBoundingClientRect();
+    // Si el click ocurrió fuera del contenedor, no hacemos raycast (importante para evitar hits accidentales)
+    if (
+      clientX < rect.left || clientX > rect.right ||
+      clientY < rect.top || clientY > rect.bottom
+    ) {
+      return null;
+    }
+
+    const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    // Guard adicional (por si el rect cambia o hay valores raros)
+    if (x < -1 || x > 1 || y < -1 || y > 1) return null;
+    
+    this.raycaster.setFromCamera({ x, y }, this.camera);
+    const intersections = this.raycaster.intersectObjects(this.targets, true);
+    
+    if (intersections.length > 0) {
+      // Encontrar el modelo raíz
+      let root = intersections[0].object;
+      while (root.parent && !this.targets.includes(root)) {
+        root = root.parent;
+      }
+      if (this.targets.includes(root)) {
+        return root;
+      }
+    }
+    return null;
   }
 
   handleTouchStart(e) {
@@ -1236,7 +1324,7 @@ export class ArtShooterGame {
     
     // Navegar al proyecto correspondiente de forma instantánea
     // Solo navegar si no estamos ya navegando (evita navegaciones múltiples)
-    if (projectInfo && this.onNavigate && !this.isNavigating) {
+    if (projectInfo && this.onNavigate && !this.isNavigating && this.redirectEnabled) {
       this.isNavigating = true;
       this.isActive = false; // Desactivar el juego para evitar más disparos
       this.onNavigate(`/${projectInfo.category}/${projectInfo.projectId}`);
@@ -2345,6 +2433,10 @@ export class ArtShooterGame {
     }
     if (this.onWindowBlur) window.removeEventListener('blur', this.onWindowBlur);
     if (this.onWindowFocus) window.removeEventListener('focus', this.onWindowFocus);
+    if (this._onMobileMenuState) {
+      window.removeEventListener('mobileMenuState', this._onMobileMenuState);
+      this._onMobileMenuState = null;
+    }
     
     // Limpiar post-processing
     if (this.composer) {

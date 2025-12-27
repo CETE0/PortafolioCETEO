@@ -59,6 +59,7 @@ export default function MobileMenu() {
   const toggleMenu = () => {
     hasInteractedRef.current = true; // User has interacted, stop wiggling
     const sidebar = document.getElementById('mobile-sidebar');
+    const nextIsOpen = !isOpen;
     if (sidebar) {
       if (isOpen) {
         // Close sidebar
@@ -70,7 +71,12 @@ export default function MobileMenu() {
         sidebar.classList.add('translate-x-0');
       }
     }
-    setIsOpen(!isOpen);
+    setIsOpen(nextIsOpen);
+
+    // Notificar a otras partes (ej. el juego) que el menú móvil está abierto/cerrado
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mobileMenuState', { detail: { isOpen: nextIsOpen } }));
+    }
   };
 
   return (

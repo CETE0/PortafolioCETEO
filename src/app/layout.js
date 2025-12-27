@@ -86,7 +86,9 @@ export default function RootLayout({ children }) {
           </div>
 
           {/* Main Content */}
-          <main className="flex-1 w-full bg-white min-h-screen h-full pt-16 md:pt-0">
+          {/* Ojo: en layout flex, `w-full` puede provocar overflow/solapamiento sobre el sidebar.
+              `min-w-0` asegura que el contenido flex se contraiga correctamente. */}
+          <main className="flex-1 min-w-0 bg-white min-h-screen h-full pt-16 md:pt-0">
             {children}
           </main>
         </div>

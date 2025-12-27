@@ -221,7 +221,6 @@ export const projectTranslations = {
             es: ''
           }
         },
-        {}, {},
         {
           title: { en: 'Medium Video', es: 'Video Médium' }
         }
@@ -237,7 +236,6 @@ export const projectTranslations = {
             es: ''
           }
         },
-        {}, {},
         {
           title: { en: 'Universal Donor Video', es: 'Video Donante Universal' }
         }

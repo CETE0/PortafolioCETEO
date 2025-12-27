@@ -418,18 +418,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Santiago 1 - 1',
+          alt: 'Santiago 1',
           text: ''
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Santiago 1 - 2'
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Santiago 1 - 3'
         }
       ]
     },
@@ -439,18 +429,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Médium 1',
+          alt: 'Médium',
           text: ''
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Médium 2'
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Médium 3'
         },
         {
           type: 'youtube',
@@ -465,18 +445,8 @@ export const projects = {
         {
           type: 'image',
           src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Donante Universal 1',
+          alt: 'Donante Universal',
           text: ''
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Donante Universal 2'
-        },
-        {
-          type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Donante Universal 3'
         },
         {
           type: 'youtube',

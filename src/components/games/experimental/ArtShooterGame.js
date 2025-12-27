@@ -950,6 +950,7 @@ export class ArtShooterGame {
       this.controls.lock();
       return;
     }
+    this.animateDesktopCrosshairClick();
     this.shoot();
   }
 
@@ -1005,7 +1006,8 @@ export class ArtShooterGame {
     this._touchMoved = false;
     // Si el toque fue corto y sin movimiento significativo, disparamos
     if (!moved && dt <= this.tapTimeThresholdMs) {
-      this.shoot();
+      this.animateDesktopCrosshairClick();
+    this.shoot();
     }
   }
 
@@ -1229,6 +1231,11 @@ export class ArtShooterGame {
     el.style.height = '20px';
     el.style.zIndex = '1000';
     el.style.pointerEvents = 'none';
+    const crosshairInner = document.createElement('div');
+    crosshairInner.style.position = 'relative';
+    crosshairInner.style.width = '100%';
+    crosshairInner.style.height = '100%';
+    crosshairInner.style.transition = 'transform 0.4s ease-out';
 
     // Cruz idéntica al cursor custom (líneas vertical y horizontal)
     const crosshair = document.createElement('div');
@@ -1301,6 +1308,11 @@ export class ArtShooterGame {
     el.style.height = '20px';
     el.style.zIndex = '1000';
     el.style.pointerEvents = 'none';
+    const crosshairInner = document.createElement('div');
+    crosshairInner.style.position = 'relative';
+    crosshairInner.style.width = '100%';
+    crosshairInner.style.height = '100%';
+    crosshairInner.style.transition = 'transform 0.4s ease-out';
     // mira similar a CustomCursor: líneas cruzadas
     const v = document.createElement('div');
     v.style.position = 'absolute';
@@ -1318,11 +1330,26 @@ export class ArtShooterGame {
     h.style.height = '2px';
     h.style.background = 'black';
     h.style.transform = 'translateY(-50%)';
-    el.appendChild(v);
-    el.appendChild(h);
+    crosshairInner.appendChild(v);
+    crosshairInner.appendChild(h);
+    el.appendChild(crosshairInner);
     this.container.style.position = 'relative';
     this.container.appendChild(el);
     this.desktopCrosshairEl = el;
+    this.desktopCrosshairInner = crosshairInner;
+  }
+
+  animateDesktopCrosshairClick() {
+    if (!this.desktopCrosshairInner) return;
+    this.desktopCrosshairInner.style.transform = 'rotate(180deg)';
+    const handleTransitionEnd = () => {
+      this.desktopCrosshairInner.style.transition = 'none';
+      this.desktopCrosshairInner.style.transform = 'rotate(0deg)';
+      void this.desktopCrosshairInner.offsetWidth;
+      this.desktopCrosshairInner.style.transition = 'transform 0.4s ease-out';
+      this.desktopCrosshairInner.removeEventListener('transitionend', handleTransitionEnd);
+    };
+    this.desktopCrosshairInner.addEventListener('transitionend', handleTransitionEnd);
   }
 
   showDesktopCrosshair() {
@@ -1352,6 +1379,11 @@ export class ArtShooterGame {
       el.style.justifyContent = 'center';
       el.style.background = 'rgba(255,255,255,0.0)';
       el.style.pointerEvents = 'none';
+    const crosshairInner = document.createElement('div');
+    crosshairInner.style.position = 'relative';
+    crosshairInner.style.width = '100%';
+    crosshairInner.style.height = '100%';
+    crosshairInner.style.transition = 'transform 0.4s ease-out';
       el.style.zIndex = '900';
       const text = document.createElement('div');
       text.textContent = 'CLICK';

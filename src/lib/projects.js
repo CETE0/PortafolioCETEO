@@ -411,6 +411,79 @@ export const projects = {
           title: 'Te juro que es primera vez que me pasa Video'
         }
       ]
+    },
+    'santiago-1': {
+      title: 'santiago 1',
+      content: [
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Santiago 1 - 1',
+          text: ''
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Santiago 1 - 2'
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Santiago 1 - 3'
+        }
+      ]
+    },
+    'medium': {
+      title: 'médium',
+      content: [
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Médium 1',
+          text: ''
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Médium 2'
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Médium 3'
+        },
+        {
+          type: 'youtube',
+          id: '8XZsJQcQJtU',
+          title: 'Médium Video'
+        }
+      ]
+    },
+    'donante-universal': {
+      title: 'donante universal',
+      content: [
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Donante Universal 1',
+          text: ''
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Donante Universal 2'
+        },
+        {
+          type: 'image',
+          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          alt: 'Donante Universal 3'
+        },
+        {
+          type: 'youtube',
+          id: 'E1FBAKdZAc8',
+          title: 'Donante Universal Video'
+        }
+      ]
     }
   }
 };

@@ -198,6 +198,50 @@ export const projectTranslations = {
           title: { en: 'Video', es: 'Video' }
         }
       ]
+    },
+
+    'santiago-1': {
+      title: { en: 'santiago 1', es: 'santiago 1' },
+      items: [
+        {
+          text: {
+            en: '',
+            es: ''
+          }
+        }
+      ]
+    },
+
+    'medium': {
+      title: { en: 'medium', es: 'médium' },
+      items: [
+        {
+          text: {
+            en: '',
+            es: ''
+          }
+        },
+        {}, {},
+        {
+          title: { en: 'Medium Video', es: 'Video Médium' }
+        }
+      ]
+    },
+
+    'donante-universal': {
+      title: { en: 'universal donor', es: 'donante universal' },
+      items: [
+        {
+          text: {
+            en: '',
+            es: ''
+          }
+        },
+        {}, {},
+        {
+          title: { en: 'Universal Donor Video', es: 'Video Donante Universal' }
+        }
+      ]
     }
   }
 };

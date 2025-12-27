@@ -37,6 +37,9 @@ export const dict = {
     modal: {
       loadingHighRes: 'Loading high-res...',
     },
+    experimental: {
+      warning: 'These projects may affect browser performance or redirect you externally.',
+    },
   },
   es: {
     common: {
@@ -75,6 +78,9 @@ export const dict = {
     },
     modal: {
       loadingHighRes: 'Cargando en alta...',
+    },
+    experimental: {
+      warning: 'Estos proyectos pueden afectar el rendimiento del navegador o redirigirte externamente.',
     },
   },
 };

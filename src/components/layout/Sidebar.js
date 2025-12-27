@@ -9,6 +9,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 const Sidebar = () => {
   const pathname = usePathname();
   const [activeCategory, setActiveCategory] = useState('artworks');
+  const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
   const { t } = useLanguage();
 
   const categories = {
@@ -24,6 +25,9 @@ const Sidebar = () => {
         'autorretrato',
         'una-flor-para-otra...',
         'para-ti-esto-es-un-juego',
+        'santiago-1',
+        'medium',
+        'donante-universal',
       ]
     },
     photography: {
@@ -81,15 +85,28 @@ const Sidebar = () => {
         {/* Navigation */}
         <div className="space-y-8 md:space-y-4 w-full flex flex-col items-center md:items-start">
           {Object.entries(categories).map(([key, category]) => (
-            <div key={key} className="space-y-2">
+            <div key={key} className="space-y-2 relative">
               <button
-                onClick={() => setActiveCategory(key)}
+                onClick={() => {
+                  setActiveCategory(key);
+                  if (key === 'experimental' && activeCategory !== 'experimental') {
+                    setShowExperimentalWarning(true);
+                    setTimeout(() => setShowExperimentalWarning(false), 3000);
+                  }
+                }}
                 className={`block w-full text-center md:text-left text-sm font-medium ${
                   activeCategory === key ? 'text-red-500' : 'text-gray-900'
                 }`}
               >
                 {category.name}
               </button>
+              
+              {/* Experimental warning popup */}
+              {key === 'experimental' && showExperimentalWarning && (
+                <div className="absolute left-0 md:left-full top-0 md:top-auto md:ml-2 mt-6 md:mt-0 z-50 bg-white border border-gray-300 px-3 py-2 text-xs text-gray-700 shadow-sm max-w-[200px] whitespace-normal">
+                  {t('experimental.warning')}
+                </div>
+              )}
               
               {activeCategory === key && (
                 <div className={`space-y-1 transition-all duration-300 w-full flex flex-col items-center md:items-start ${activeCategory === key ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}` }>

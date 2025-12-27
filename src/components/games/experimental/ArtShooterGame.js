@@ -76,6 +76,8 @@ const GAME_CONFIG = {
   animation: {
     speedBase: 1.0,
     speedJitter: 0.4,
+    // Tipos de animación disponibles con sus configuraciones
+    types: ['walk', 'idle', 'dance', 'float', 'aggressive'],
     amplitudes: {
       arm: 0.5, // rad
       leg: 0.5, // rad
@@ -84,6 +86,21 @@ const GAME_CONFIG = {
       torsoTwist: 0.12, // rad
       hipTwist: 0.10, // rad
       bob: 0.02, // units
+      // Nuevas amplitudes
+      breath: 0.015, // escala de respiración
+      headLook: 0.25, // rad - cabeza mirando alrededor
+      shoulderShrug: 0.08, // rad - encogimiento de hombros
+      sway: 0.05, // rad - balanceo lateral
+      // Baile
+      danceBounce: 0.08, // units
+      danceArm: 0.8, // rad
+      danceTwist: 0.3, // rad
+      // Flotante
+      floatHeight: 0.15, // units
+      floatSway: 0.2, // rad
+      // Agresivo
+      aggressiveArm: 0.4, // rad
+      aggressiveLean: 0.15, // rad
     },
   },
   orbit: {
@@ -471,9 +488,10 @@ export class ArtShooterGame {
     neck.position.set(0, pelvisHeight + torsoHeight + neckHeight / 2, 0);
     group.add(neck);
 
-    // Cabeza
-    const head = new THREE.Mesh(new THREE.IcosahedronGeometry(headRadius, 0), sharedMaterial);
-    head.position.set(0, pelvisHeight + torsoHeight + neckHeight + headRadius, 0);
+    // Cabeza (cubo)
+    const headSize = headRadius * 1.4; // Tamaño del cubo basado en el radio original
+    const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize), sharedMaterial);
+    head.position.set(0, pelvisHeight + torsoHeight + neckHeight + headSize / 2, 0);
     group.add(head);
 
     // Brazos con pivotes de articulación (hombro y codo)
@@ -622,11 +640,21 @@ export class ArtShooterGame {
       head,
     };
 
-    // Inicializar estado de animación
+    // Inicializar estado de animación con tipo aleatorio
+    const animTypes = GAME_CONFIG.animation.types;
+    const animType = animTypes[Math.floor(Math.random() * animTypes.length)];
+    
     this.animationStates.set(group, {
       t: Math.random() * Math.PI * 2, // fase aleatoria
+      t2: Math.random() * Math.PI * 2, // segunda fase para movimientos secundarios
+      t3: Math.random() * Math.PI * 2, // tercera fase para variación
       speed: GAME_CONFIG.animation.speedBase + (Math.random() - 0.5) * 2 * GAME_CONFIG.animation.speedJitter,
       baseY: group.position.y,
+      type: animType, // tipo de animación asignado
+      // Parámetros únicos por modelo para más variación
+      headLookSpeed: 0.3 + Math.random() * 0.4,
+      breathSpeed: 0.8 + Math.random() * 0.4,
+      swayPhase: Math.random() * Math.PI * 2,
     });
 
     return group;
@@ -1756,6 +1784,332 @@ export class ArtShooterGame {
     }
   }
 
+  // ============ MÉTODOS DE ANIMACIÓN ============
+
+  // Animación de caminar (mejorada)
+  animateWalk(anim, amplitudes, limbs, model, baseY) {
+    const { lShoulderPivot, rShoulderPivot, lElbowPivot, rElbowPivot,
+            lHipPivot, rHipPivot, lKneePivot, rKneePivot,
+            lWristPivot, rWristPivot, lAnklePivot, rAnklePivot,
+            torso, pelvis, head, shoulders } = limbs;
+
+    const swingArm = Math.sin(anim.t) * amplitudes.arm;
+    const swingLeg = Math.sin(anim.t) * amplitudes.leg;
+
+    // Brazos oscilando
+    if (lShoulderPivot) lShoulderPivot.rotation.x = swingArm;
+    if (rShoulderPivot) rShoulderPivot.rotation.x = -swingArm;
+    
+    // Codos plegándose
+    if (lElbowPivot) lElbowPivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
+    if (rElbowPivot) rElbowPivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
+    
+    // Muñecas
+    if (lWristPivot) lWristPivot.rotation.z = Math.sin(anim.t * 1.2) * 0.15;
+    if (rWristPivot) rWristPivot.rotation.z = -Math.sin(anim.t * 1.2) * 0.15;
+
+    // Piernas
+    if (lHipPivot) lHipPivot.rotation.x = -swingLeg;
+    if (rHipPivot) rHipPivot.rotation.x = swingLeg;
+    
+    // Rodillas
+    if (lKneePivot) lKneePivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
+    if (rKneePivot) rKneePivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
+
+    // Tobillos
+    const footPitchL = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4)) * 0.35;
+    const footPitchR = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4 + Math.PI)) * 0.35;
+    if (lAnklePivot) lAnklePivot.rotation.x = footPitchL;
+    if (rAnklePivot) rAnklePivot.rotation.x = footPitchR;
+
+    // Torsión de pelvis/torso
+    if (pelvis) pelvis.rotation.y = -swingLeg * amplitudes.hipTwist;
+    if (torso) torso.rotation.y = swingArm * amplitudes.torsoTwist;
+    
+    // Cabeza mira ligeramente alrededor mientras camina
+    if (head) {
+      head.rotation.y = -swingArm * amplitudes.torsoTwist * 0.6 + Math.sin(anim.t3) * amplitudes.headLook * 0.3;
+      head.rotation.x = Math.sin(anim.t3 * 0.7) * 0.1;
+    }
+
+    // Hombros suben/bajan ligeramente con el paso
+    if (shoulders) {
+      shoulders.rotation.z = Math.sin(anim.t) * amplitudes.shoulderShrug;
+    }
+
+    // Bob vertical
+    const bob = Math.max(0, Math.cos(anim.t)) * amplitudes.bob;
+    model.position.y = baseY + bob;
+  }
+
+  // Animación de reposo/idle
+  animateIdle(anim, amplitudes, limbs, model, baseY) {
+    const { lShoulderPivot, rShoulderPivot, lElbowPivot, rElbowPivot,
+            lHipPivot, rHipPivot, lKneePivot, rKneePivot,
+            lWristPivot, rWristPivot, lAnklePivot, rAnklePivot,
+            torso, pelvis, head, shoulders } = limbs;
+
+    // Peso cambiando de un pie a otro (muy sutil)
+    const weightShift = Math.sin(anim.t * 0.3) * 0.08;
+    
+    // Brazos relajados con pequeño balanceo
+    if (lShoulderPivot) {
+      lShoulderPivot.rotation.x = 0.1 + Math.sin(anim.t * 0.5) * 0.05;
+      lShoulderPivot.rotation.z = 0.15 + Math.sin(anim.t * 0.4) * 0.03;
+    }
+    if (rShoulderPivot) {
+      rShoulderPivot.rotation.x = 0.1 + Math.sin(anim.t * 0.5 + 0.5) * 0.05;
+      rShoulderPivot.rotation.z = -0.15 - Math.sin(anim.t * 0.4 + 0.5) * 0.03;
+    }
+    
+    // Codos ligeramente doblados
+    if (lElbowPivot) lElbowPivot.rotation.x = 0.2 + Math.sin(anim.t * 0.6) * 0.05;
+    if (rElbowPivot) rElbowPivot.rotation.x = 0.2 + Math.sin(anim.t * 0.6 + 1) * 0.05;
+    
+    // Muñecas relajadas
+    if (lWristPivot) lWristPivot.rotation.z = Math.sin(anim.t * 0.4) * 0.1;
+    if (rWristPivot) rWristPivot.rotation.z = -Math.sin(anim.t * 0.4) * 0.1;
+
+    // Piernas casi quietas, solo peso cambiando
+    if (lHipPivot) lHipPivot.rotation.x = weightShift * 0.5;
+    if (rHipPivot) rHipPivot.rotation.x = -weightShift * 0.5;
+    if (lKneePivot) lKneePivot.rotation.x = Math.max(0, -weightShift * 0.3);
+    if (rKneePivot) rKneePivot.rotation.x = Math.max(0, weightShift * 0.3);
+
+    // Balanceo lateral sutil del torso
+    if (torso) {
+      torso.rotation.z = Math.sin(anim.t * 0.3 + anim.swayPhase) * amplitudes.sway;
+      torso.rotation.y = Math.sin(anim.t * 0.2) * 0.03;
+    }
+    if (pelvis) {
+      pelvis.rotation.z = -Math.sin(anim.t * 0.3 + anim.swayPhase) * amplitudes.sway * 0.5;
+    }
+
+    // Cabeza mirando alrededor con curiosidad
+    if (head) {
+      head.rotation.y = Math.sin(anim.t3) * amplitudes.headLook;
+      head.rotation.x = Math.sin(anim.t3 * 0.7 + 1) * amplitudes.headLook * 0.4;
+      // Pequeña inclinación lateral
+      head.rotation.z = Math.sin(anim.t3 * 0.5) * 0.08;
+    }
+
+    // Hombros suben/bajan con la respiración
+    if (shoulders) {
+      shoulders.position.y = (shoulders.position.y || 0) + Math.sin(anim.t2) * 0.005;
+    }
+
+    // Pequeño bob de respiración
+    const breathBob = Math.sin(anim.t2) * 0.008;
+    model.position.y = baseY + breathBob;
+  }
+
+  // Animación de baile
+  animateDance(anim, amplitudes, limbs, model, baseY) {
+    const { lShoulderPivot, rShoulderPivot, lElbowPivot, rElbowPivot,
+            lHipPivot, rHipPivot, lKneePivot, rKneePivot,
+            lWristPivot, rWristPivot, lAnklePivot, rAnklePivot,
+            torso, pelvis, head, shoulders } = limbs;
+
+    const beat = anim.t * 2; // Ritmo más rápido
+    const bounce = Math.abs(Math.sin(beat)) * amplitudes.danceBounce;
+
+    // Brazos moviéndose al ritmo - alternando arriba/abajo
+    if (lShoulderPivot) {
+      lShoulderPivot.rotation.x = -Math.PI * 0.4 + Math.sin(beat) * amplitudes.danceArm * 0.5;
+      lShoulderPivot.rotation.z = Math.sin(beat * 0.5) * 0.3;
+    }
+    if (rShoulderPivot) {
+      rShoulderPivot.rotation.x = -Math.PI * 0.4 + Math.sin(beat + Math.PI) * amplitudes.danceArm * 0.5;
+      rShoulderPivot.rotation.z = -Math.sin(beat * 0.5) * 0.3;
+    }
+    
+    // Codos flexionados y moviéndose
+    if (lElbowPivot) lElbowPivot.rotation.x = 0.5 + Math.sin(beat * 1.5) * 0.4;
+    if (rElbowPivot) rElbowPivot.rotation.x = 0.5 + Math.sin(beat * 1.5 + Math.PI) * 0.4;
+    
+    // Muñecas girando
+    if (lWristPivot) {
+      lWristPivot.rotation.z = Math.sin(beat * 2) * 0.4;
+      lWristPivot.rotation.x = Math.cos(beat * 2) * 0.2;
+    }
+    if (rWristPivot) {
+      rWristPivot.rotation.z = -Math.sin(beat * 2) * 0.4;
+      rWristPivot.rotation.x = Math.cos(beat * 2) * 0.2;
+    }
+
+    // Piernas saltando ligeramente
+    const legBounce = Math.sin(beat) * 0.15;
+    if (lHipPivot) lHipPivot.rotation.x = legBounce;
+    if (rHipPivot) rHipPivot.rotation.x = -legBounce;
+    if (lKneePivot) lKneePivot.rotation.x = Math.max(0, Math.sin(beat + Math.PI * 0.5) * 0.4);
+    if (rKneePivot) rKneePivot.rotation.x = Math.max(0, Math.sin(beat + Math.PI * 1.5) * 0.4);
+    
+    // Tobillos apuntando
+    if (lAnklePivot) lAnklePivot.rotation.x = Math.sin(beat) * 0.2;
+    if (rAnklePivot) rAnklePivot.rotation.x = Math.sin(beat + Math.PI) * 0.2;
+
+    // Torso girando y moviéndose
+    if (torso) {
+      torso.rotation.y = Math.sin(beat * 0.5) * amplitudes.danceTwist;
+      torso.rotation.z = Math.sin(beat) * 0.1;
+    }
+    if (pelvis) {
+      pelvis.rotation.y = -Math.sin(beat * 0.5) * amplitudes.danceTwist * 0.7;
+      pelvis.rotation.x = Math.sin(beat) * 0.08;
+    }
+
+    // Cabeza moviéndose al ritmo
+    if (head) {
+      head.rotation.y = Math.sin(beat * 0.5) * 0.2;
+      head.rotation.x = Math.sin(beat) * 0.15;
+      head.rotation.z = Math.sin(beat * 0.5) * 0.1;
+    }
+
+    // Hombros al ritmo
+    if (shoulders) {
+      shoulders.rotation.z = Math.sin(beat) * 0.15;
+    }
+
+    // Rebote vertical pronunciado
+    model.position.y = baseY + bounce;
+  }
+
+  // Animación flotante/espectral
+  animateFloat(anim, amplitudes, limbs, model, baseY) {
+    const { lShoulderPivot, rShoulderPivot, lElbowPivot, rElbowPivot,
+            lHipPivot, rHipPivot, lKneePivot, rKneePivot,
+            lWristPivot, rWristPivot, lAnklePivot, rAnklePivot,
+            torso, pelvis, head, shoulders } = limbs;
+
+    const floatT = anim.t * 0.5; // Movimiento lento y etéreo
+
+    // Brazos extendidos flotando suavemente
+    if (lShoulderPivot) {
+      lShoulderPivot.rotation.x = -Math.PI * 0.15 + Math.sin(floatT + 0.5) * 0.15;
+      lShoulderPivot.rotation.z = Math.PI * 0.25 + Math.sin(floatT * 0.7) * amplitudes.floatSway;
+    }
+    if (rShoulderPivot) {
+      rShoulderPivot.rotation.x = -Math.PI * 0.15 + Math.sin(floatT) * 0.15;
+      rShoulderPivot.rotation.z = -Math.PI * 0.25 - Math.sin(floatT * 0.7 + 1) * amplitudes.floatSway;
+    }
+    
+    // Codos suavemente doblados
+    if (lElbowPivot) lElbowPivot.rotation.x = 0.3 + Math.sin(floatT * 0.8) * 0.1;
+    if (rElbowPivot) rElbowPivot.rotation.x = 0.3 + Math.sin(floatT * 0.8 + 1) * 0.1;
+    
+    // Muñecas cayendo elegantemente
+    if (lWristPivot) {
+      lWristPivot.rotation.x = 0.4 + Math.sin(floatT * 0.6) * 0.15;
+      lWristPivot.rotation.z = Math.sin(floatT * 0.5) * 0.2;
+    }
+    if (rWristPivot) {
+      rWristPivot.rotation.x = 0.4 + Math.sin(floatT * 0.6 + 0.5) * 0.15;
+      rWristPivot.rotation.z = -Math.sin(floatT * 0.5) * 0.2;
+    }
+
+    // Piernas colgando ligeramente
+    if (lHipPivot) {
+      lHipPivot.rotation.x = 0.1 + Math.sin(floatT * 0.4) * 0.08;
+      lHipPivot.rotation.z = Math.sin(floatT * 0.3) * 0.05;
+    }
+    if (rHipPivot) {
+      rHipPivot.rotation.x = 0.1 + Math.sin(floatT * 0.4 + 0.5) * 0.08;
+      rHipPivot.rotation.z = -Math.sin(floatT * 0.3 + 0.5) * 0.05;
+    }
+    if (lKneePivot) lKneePivot.rotation.x = 0.15 + Math.sin(floatT * 0.5) * 0.1;
+    if (rKneePivot) rKneePivot.rotation.x = 0.15 + Math.sin(floatT * 0.5 + 1) * 0.1;
+    
+    // Pies apuntando hacia abajo
+    if (lAnklePivot) lAnklePivot.rotation.x = 0.3 + Math.sin(floatT * 0.4) * 0.1;
+    if (rAnklePivot) rAnklePivot.rotation.x = 0.3 + Math.sin(floatT * 0.4 + 0.5) * 0.1;
+
+    // Torso balanceándose suavemente
+    if (torso) {
+      torso.rotation.z = Math.sin(floatT * 0.3) * amplitudes.floatSway * 0.5;
+      torso.rotation.x = Math.sin(floatT * 0.4) * 0.05;
+    }
+    if (pelvis) {
+      pelvis.rotation.z = -Math.sin(floatT * 0.3) * amplitudes.floatSway * 0.3;
+    }
+
+    // Cabeza inclinada serenamente
+    if (head) {
+      head.rotation.x = -0.1 + Math.sin(floatT * 0.5) * 0.1;
+      head.rotation.y = Math.sin(floatT * 0.3) * 0.15;
+      head.rotation.z = Math.sin(floatT * 0.4) * 0.08;
+    }
+
+    // Flotación vertical
+    const floatHeight = Math.sin(floatT) * amplitudes.floatHeight;
+    model.position.y = baseY + 0.1 + floatHeight;
+  }
+
+  // Animación agresiva/amenazante
+  animateAggressive(anim, amplitudes, limbs, model, baseY) {
+    const { lShoulderPivot, rShoulderPivot, lElbowPivot, rElbowPivot,
+            lHipPivot, rHipPivot, lKneePivot, rKneePivot,
+            lWristPivot, rWristPivot, lAnklePivot, rAnklePivot,
+            torso, pelvis, head, shoulders } = limbs;
+
+    const aggroT = anim.t * 1.5; // Movimientos más rápidos e intensos
+    const pulse = Math.sin(aggroT * 3) * 0.5 + 0.5; // Pulsación de tensión
+
+    // Brazos levantados en postura de pelea
+    if (lShoulderPivot) {
+      lShoulderPivot.rotation.x = -0.8 + Math.sin(aggroT) * amplitudes.aggressiveArm * 0.3;
+      lShoulderPivot.rotation.z = 0.4 + pulse * 0.1;
+    }
+    if (rShoulderPivot) {
+      rShoulderPivot.rotation.x = -0.8 + Math.sin(aggroT + Math.PI * 0.5) * amplitudes.aggressiveArm * 0.3;
+      rShoulderPivot.rotation.z = -0.4 - pulse * 0.1;
+    }
+    
+    // Codos muy flexionados (puños arriba)
+    if (lElbowPivot) lElbowPivot.rotation.x = 1.2 + Math.sin(aggroT * 2) * 0.2;
+    if (rElbowPivot) rElbowPivot.rotation.x = 1.2 + Math.sin(aggroT * 2 + 1) * 0.2;
+    
+    // Puños cerrados (muñecas tensas)
+    if (lWristPivot) lWristPivot.rotation.x = 0.3;
+    if (rWristPivot) rWristPivot.rotation.x = 0.3;
+
+    // Piernas en postura de combate
+    if (lHipPivot) {
+      lHipPivot.rotation.x = -0.15 + Math.sin(aggroT * 0.8) * 0.1;
+      lHipPivot.rotation.z = 0.1;
+    }
+    if (rHipPivot) {
+      rHipPivot.rotation.x = 0.1 + Math.sin(aggroT * 0.8) * 0.1;
+      rHipPivot.rotation.z = -0.1;
+    }
+    if (lKneePivot) lKneePivot.rotation.x = 0.2 + pulse * 0.1;
+    if (rKneePivot) rKneePivot.rotation.x = 0.15 + pulse * 0.1;
+
+    // Torso inclinado hacia adelante amenazadoramente
+    if (torso) {
+      torso.rotation.x = amplitudes.aggressiveLean + Math.sin(aggroT * 2) * 0.05;
+      torso.rotation.y = Math.sin(aggroT * 0.7) * 0.1;
+    }
+    if (pelvis) {
+      pelvis.rotation.x = -amplitudes.aggressiveLean * 0.5;
+    }
+
+    // Cabeza baja y mirando fijamente con pequeños movimientos erráticos
+    if (head) {
+      head.rotation.x = 0.2 + Math.sin(aggroT * 4) * 0.03; // Pequeño temblor
+      head.rotation.y = Math.sin(aggroT * 0.5) * 0.15;
+      head.rotation.z = Math.sin(aggroT * 3) * 0.02; // Temblor
+    }
+
+    // Hombros tensos y elevados
+    if (shoulders) {
+      shoulders.rotation.z = pulse * 0.05;
+    }
+
+    // Pequeño rebote de tensión
+    const tensionBob = Math.sin(aggroT * 2) * 0.015;
+    model.position.y = baseY + tensionBob;
+  }
+
   animate() {
     if (!this.scene || !this.camera) return;
     requestAnimationFrame(() => this.animate());
@@ -1780,10 +2134,14 @@ export class ArtShooterGame {
         // mantener bob vertical adicional más abajo
         if (!m.userData.baseY) m.userData.baseY = baseY;
       }
-      // Animación de marcha simple
+      // Sistema de animación mejorado con múltiples tipos
       const anim = this.animationStates.get(m);
       if (anim && m.userData && m.userData.limbs) {
+        // Actualizar fases de tiempo
         anim.t += delta * anim.speed;
+        anim.t2 += delta * anim.breathSpeed;
+        anim.t3 += delta * anim.headLookSpeed;
+        
         const { amplitudes } = GAME_CONFIG.animation;
         const {
           lShoulderPivot,
@@ -1794,47 +2152,46 @@ export class ArtShooterGame {
           rHipPivot,
           lKneePivot,
           rKneePivot,
+          lWristPivot,
+          rWristPivot,
+          lAnklePivot,
+          rAnklePivot,
           torso,
           pelvis,
           head,
+          shoulders,
         } = m.userData.limbs;
 
-        const swingArm = Math.sin(anim.t) * amplitudes.arm;
-        const swingLeg = Math.sin(anim.t) * amplitudes.leg;
+        const baseY2 = anim.baseY || m.position.y;
+        if (!anim.baseY) anim.baseY = baseY2;
 
-        // Hombros adelante/atrás (eje Z da un look gráfico, eje X más anatómico)
-        if (lShoulderPivot) lShoulderPivot.rotation.x = swingArm;
-        if (rShoulderPivot) rShoulderPivot.rotation.x = -swingArm;
-        // Codos pliegan en fase opuesta parcial
-        if (lElbowPivot) lElbowPivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
-        if (rElbowPivot) rElbowPivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.elbow);
-        // Muñecas: compensación suave y pequeña torsión para evitar rigidez
-        if (m.userData.limbs.lWristPivot) m.userData.limbs.lWristPivot.rotation.z = Math.sin(anim.t * 1.2) * 0.15;
-        if (m.userData.limbs.rWristPivot) m.userData.limbs.rWristPivot.rotation.z = -Math.sin(anim.t * 1.2) * 0.15;
+        // Respiración universal (sutil expansión del torso)
+        const breathScale = 1 + Math.sin(anim.t2) * amplitudes.breath;
+        if (torso) {
+          torso.scale.x = breathScale;
+          torso.scale.z = breathScale;
+        }
 
-        // Caderas
-        if (lHipPivot) lHipPivot.rotation.x = -swingLeg;
-        if (rHipPivot) rHipPivot.rotation.x = swingLeg;
-        // Rodillas con clamp para evitar hiperextensión hacia atrás
-        if (lKneePivot) lKneePivot.rotation.x = Math.max(0, Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
-        if (rKneePivot) rKneePivot.rotation.x = Math.max(0, -Math.sin(anim.t + Math.PI * 0.2) * amplitudes.knee);
-
-        // Tobillos: inclinar el pie según fase para tocar el suelo de forma creíble
-        const footPitchL = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4)) * 0.35; // despega la punta al avanzar
-        const footPitchR = -Math.max(0, Math.sin(anim.t + Math.PI * 0.4 + Math.PI)) * 0.35;
-        if (m.userData.limbs.lAnklePivot) m.userData.limbs.lAnklePivot.rotation.x = footPitchL;
-        if (m.userData.limbs.rAnklePivot) m.userData.limbs.rAnklePivot.rotation.x = footPitchR;
-
-        // Torsión leve de pelvis/torso para contrabalance
-        if (pelvis) pelvis.rotation.y = -swingLeg * amplitudes.hipTwist;
-        if (torso) torso.rotation.y = swingArm * amplitudes.torsoTwist;
-        if (head) head.rotation.y = -swingArm * amplitudes.torsoTwist * 0.6;
-
-        // Bob vertical
-        const bob = Math.max(0, Math.cos(anim.t)) * amplitudes.bob; // solo baja en la fase de apoyo
-        const baseY2 = (m.userData.baseY || m.position.y);
-        m.position.y = baseY2 + bob;
-        if (!m.userData.baseY) m.userData.baseY = baseY2;
+        // Aplicar animación según el tipo
+        switch (anim.type) {
+          case 'walk':
+            this.animateWalk(anim, amplitudes, m.userData.limbs, m, baseY2);
+            break;
+          case 'idle':
+            this.animateIdle(anim, amplitudes, m.userData.limbs, m, baseY2);
+            break;
+          case 'dance':
+            this.animateDance(anim, amplitudes, m.userData.limbs, m, baseY2);
+            break;
+          case 'float':
+            this.animateFloat(anim, amplitudes, m.userData.limbs, m, baseY2);
+            break;
+          case 'aggressive':
+            this.animateAggressive(anim, amplitudes, m.userData.limbs, m, baseY2);
+            break;
+          default:
+            this.animateWalk(anim, amplitudes, m.userData.limbs, m, baseY2);
+        }
       }
     });
     // Actualizar explosiones

@@ -185,7 +185,10 @@ export class ArtShooterGame {
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
     this.hasEnteredPointerLockOnce = false; // Para distinguir estado inicial vs salir con ESC
-    this.redirectEnabled = true; // Gate general de redirección (desktop unlock / menú móvil)
+    // Gate general de redirección:
+    // - Desktop: solo se habilita al entrar en pointer lock (evita redirecciones antes de “entrar al juego”)
+    // - Móvil: por defecto habilitado (se deshabilita cuando el menú está abierto)
+    this.redirectEnabled = this.isTouchDevice ? true : false;
     this._onMobileMenuState = null;
     this._wasActiveBeforeMobileMenu = null;
     this.scene = null;
@@ -1027,29 +1030,8 @@ export class ArtShooterGame {
     if (this.renderer?.domElement && e.target !== this.renderer.domElement) return;
 
     if (!this.controls?.isLocked) {
-      // Si ya se salió con ESC (unlock), NO permitir redirección estando desbloqueado.
-      // En ese estado, el click solo sirve para volver a entrar en modo juego (lock).
-      if (this.hasEnteredPointerLockOnce && !this.redirectEnabled) {
-        this.centerCustomCursor();
-        this.ensureAudioStarted();
-        this.controls.lock();
-        return;
-      }
-
-      // Verificar si el click impactó un modelo ANTES de bloquear el puntero
-      // Si es así, disparar directamente a ese modelo
-      const clickedModel = this.getModelAtScreenPosition(e.clientX, e.clientY);
-      if (clickedModel) {
-        this.ensureAudioStarted();
-        this.isActive = true; // Activar temporalmente para permitir el disparo
-        this.playShootOverlay();
-        this.playSound('kick');
-        this.destroyTarget(clickedModel);
-        if (navigator.vibrate) navigator.vibrate(20);
-        return;
-      }
-      
-      // Si no impactó ningún modelo, bloquear el puntero normalmente
+      // Desktop: SIEMPRE bloquear primero. No se permite destruir/redirigir estando desbloqueado,
+      // porque el canvas puede solaparse con UI y capturar clicks “fuera” del juego.
       this.centerCustomCursor();
       this.ensureAudioStarted();
       this.controls.lock();

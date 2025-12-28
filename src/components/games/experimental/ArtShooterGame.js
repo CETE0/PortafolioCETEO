@@ -185,10 +185,8 @@ export class ArtShooterGame {
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
     this.hasEnteredPointerLockOnce = false; // Para distinguir estado inicial vs salir con ESC
-    // Gate general de redirección:
-    // - Desktop: solo se habilita al entrar en pointer lock (evita redirecciones antes de “entrar al juego”)
-    // - Móvil: por defecto habilitado (se deshabilita cuando el menú está abierto)
-    this.redirectEnabled = this.isTouchDevice ? true : false;
+    // Gate general de redirección (se inicializa después de detectar isTouchDevice)
+    this.redirectEnabled = true;
     this._onMobileMenuState = null;
     this._wasActiveBeforeMobileMenu = null;
     this.scene = null;
@@ -218,6 +216,10 @@ export class ArtShooterGame {
     this.onTouchMove = this.handleTouchMove.bind(this);
     this.onTouchEnd = this.handleTouchEnd.bind(this);
     this.isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Gate general de redirección:
+    // - Desktop: solo se habilita al entrar en pointer lock (evita redirecciones antes de “entrar al juego”)
+    // - Móvil: por defecto habilitado (se deshabilita cuando el menú está abierto)
+    this.redirectEnabled = this.isTouchDevice ? true : false;
     this.touchYaw = 0;
     this.touchPitch = 0;
     this.lastTouchX = null;

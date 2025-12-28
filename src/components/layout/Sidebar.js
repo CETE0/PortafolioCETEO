@@ -55,7 +55,8 @@ const Sidebar = () => {
       name: t('sidebar.experimental'),
       projects: [
         'medio condoro',
-        'dopa'
+        'empuja-monedas',
+        // 'dopa' // temporalmente oculto
       ]
     },
     texts: {

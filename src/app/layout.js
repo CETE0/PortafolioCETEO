@@ -1,4 +1,4 @@
-import { DM_Sans } from 'next/font/google'
+import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import Sidebar from '../components/layout/Sidebar'
 import MobileMenu from '../components/layout/MobileMenu'
@@ -17,6 +17,12 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
   variable: '--font-dm-sans'
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-jetbrains-mono'
 })
 
 export const metadata = {
@@ -53,7 +59,7 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={`${dmSans.variable} font-sans bg-white`}>
+      <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans bg-white`}>
         <LanguageProvider>
         <CustomCursor />
         <div className="flex min-h-screen h-screen bg-white">

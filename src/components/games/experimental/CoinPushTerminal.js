@@ -2,18 +2,32 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { DitheringShader } from './PostProcessingShaders';
 
 // Configuración
 const CUBE_SIZE = 2.5;
 const PUSHER_SPEED = 0.015;
 const PUSHER_AMPLITUDE = 0.6;
+const PUSHER_BASE_Y = 0;  // Posición base del pusher (0 = centro, negativo = más abajo)
 const GRAVITY = 0.0008;
 const FRICTION = 0.985;
 
 // Auto-rotación del cubo
-const AUTO_ROTATE_Y = 0.003;  // Velocidad de giro en Y
-const AUTO_TILT_AMPLITUDE = 0.15;  // Amplitud del balanceo en X
-const AUTO_TILT_SPEED = 0.008;  // Velocidad del balanceo
+const AUTO_ROTATE_Y = 0.003;
+const AUTO_TILT_AMPLITUDE = 0.15;
+const AUTO_TILT_SPEED = 0.008;
+
+// Configuración de caras para poemas
+const FACE_TEXT_Y_OFFSET = -0.8; // Ajusta este valor para subir/bajar el texto (negativo = más abajo)
+const FACE_CONFIG = {
+  front:  { position: [0, FACE_TEXT_Y_OFFSET, CUBE_SIZE / 2 + 0.01], rotation: [0, 0, 0] },
+  back:   { position: [0, FACE_TEXT_Y_OFFSET, -CUBE_SIZE / 2 - 0.01], rotation: [0, Math.PI, 0] },
+  left:   { position: [-CUBE_SIZE / 2 - 0.01, FACE_TEXT_Y_OFFSET, 0], rotation: [0, -Math.PI / 2, 0] },
+  right:  { position: [CUBE_SIZE / 2 + 0.01, FACE_TEXT_Y_OFFSET, 0], rotation: [0, Math.PI / 2, 0] },
+};
 
 export default function CoinPushTerminal() {
   const containerRef = useRef(null);
@@ -21,6 +35,9 @@ export default function CoinPushTerminal() {
   const rendererRef = useRef(null);
   const cameraRef = useRef(null);
   const cubeGroupRef = useRef(null);
+  const composerRef = useRef(null);
+  const ditheringPassRef = useRef(null);
+  const audioRef = useRef(null);
   const wordsRef = useRef([]);
   const pusherTimeRef = useRef(0);
   const animationRef = useRef(null);
@@ -32,18 +49,43 @@ export default function CoinPushTerminal() {
   const wordPoolRef = useRef([]);
   const wordWeightsRef = useRef([]);
   const totalWeightRef = useRef(0);
-  const poemLinesRef = useRef({
-    front: { words: [], y: -CUBE_SIZE / 2 - 0.3 },
-    back: { words: [], y: -CUBE_SIZE / 2 - 0.3 },
-    left: { words: [], y: -CUBE_SIZE / 2 - 0.3 },
-    right: { words: [], y: -CUBE_SIZE / 2 - 0.3 }
+  
+  // Poemas en cada cara - array de líneas, cada línea es array de palabras
+  const facePoemsRef = useRef({
+    front: { lines: [[]], mesh: null },
+    back: { lines: [[]], mesh: null },
+    left: { lines: [[]], mesh: null },
+    right: { lines: [[]], mesh: null },
   });
-  const poemMeshesRef = useRef([]);
   
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [audioStarted, setAudioStarted] = useState(false);
   const inputRef = useRef(null);
+
+  // Inicializar audio
+  useEffect(() => {
+    const audio = new Audio('/game/assets/audio/lol.mp3');
+    audio.loop = true;
+    audio.volume = 0.3;
+    audioRef.current = audio;
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Iniciar audio con interacción del usuario
+  const startAudio = useCallback(() => {
+    if (!audioStarted && audioRef.current) {
+      audioRef.current.play().catch(e => console.log('Audio autoplay blocked:', e));
+      setAudioStarted(true);
+    }
+  }, [audioStarted]);
 
   // Cargar palabras desde el JSON
   useEffect(() => {
@@ -129,109 +171,119 @@ export default function CoinPushTerminal() {
     return sprite;
   }, []);
 
-  // Crear texto 3D para poemas en los lados
-  const createPoemText = useCallback((text, side) => {
+  // Crear/actualizar el plano de texto para una cara
+  const updateFacePoem = useCallback((side) => {
+    const cubeGroup = cubeGroupRef.current;
+    if (!cubeGroup) return;
+    
+    const facePoem = facePoemsRef.current[side];
+    const config = FACE_CONFIG[side];
+    
+    // Generar texto del poema
+    const poemText = facePoem.lines
+      .map(line => line.join(' '))
+      .filter(line => line.length > 0)
+      .join('\n');
+    
+    if (!poemText) return;
+    
+    // Crear canvas con el texto
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const fontSize = 32;
+    const fontSize = 28;
+    const lineHeight = fontSize * 1.3;
+    const padding = 20;
     
     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
-    const metrics = ctx.measureText(text);
     
-    canvas.width = Math.ceil(metrics.width) + 10;
-    canvas.height = fontSize + 10;
+    // Calcular dimensiones basadas en el texto
+    const lines = poemText.split('\n');
+    let maxWidth = 0;
+    lines.forEach(line => {
+      const metrics = ctx.measureText(line);
+      maxWidth = Math.max(maxWidth, metrics.width);
+    });
     
+    // Canvas más ancho que el cubo para desbordamiento
+    canvas.width = Math.max(512, maxWidth + padding * 2);
+    canvas.height = Math.max(512, lines.length * lineHeight + padding * 2);
+    
+    // Fondo transparente
     ctx.fillStyle = 'rgba(0, 0, 0, 0)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Dibujar texto
     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
     ctx.fillStyle = '#00ff00';
-    ctx.globalAlpha = 0.8;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    ctx.textBaseline = 'top';
     
+    lines.forEach((line, i) => {
+      ctx.fillText(line, canvas.width / 2, padding + i * lineHeight);
+    });
+    
+    // Crear textura
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
     
-    const spriteMaterial = new THREE.SpriteMaterial({ 
+    // Remover mesh anterior si existe
+    if (facePoem.mesh) {
+      cubeGroup.remove(facePoem.mesh);
+      facePoem.mesh.material.map?.dispose();
+      facePoem.mesh.material.dispose();
+      facePoem.mesh.geometry.dispose();
+    }
+    
+    // Crear nuevo plano - más grande que el cubo para desbordamiento
+    const aspectRatio = canvas.width / canvas.height;
+    const planeHeight = CUBE_SIZE * 1.5;
+    const planeWidth = planeHeight * aspectRatio;
+    
+    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
+      side: THREE.DoubleSide,
       depthTest: false,
       depthWrite: false
     });
     
-    const sprite = new THREE.Sprite(spriteMaterial);
-    const aspect = canvas.width / canvas.height;
-    sprite.scale.set(aspect * 0.35, 0.35, 1);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(...config.position);
+    mesh.rotation.set(...config.rotation);
     
-    return sprite;
+    cubeGroup.add(mesh);
+    facePoem.mesh = mesh;
   }, []);
 
-  // Añadir palabra al poema de un lado
-  const addToPoem = useCallback((word, z) => {
-    const cubeGroup = cubeGroupRef.current;
-    if (!cubeGroup) return;
-    
-    // Determinar a qué lado va basándose en la posición z
+  // Añadir palabra al poema de una cara
+  const addToPoem = useCallback((word, x, z) => {
+    // Determinar a qué cara va basándose en la posición
     let side;
-    if (z > 0.3) {
-      side = 'front';
-    } else if (z < -0.3) {
-      side = 'back';
-    } else if (Math.random() > 0.5) {
-      side = 'left';
+    const absX = Math.abs(x);
+    const absZ = Math.abs(z);
+    
+    if (absZ > absX) {
+      side = z > 0 ? 'front' : 'back';
     } else {
-      side = 'right';
+      side = x > 0 ? 'right' : 'left';
     }
     
-    const poemLine = poemLinesRef.current[side];
-    poemLine.words.push(word);
+    const facePoem = facePoemsRef.current[side];
+    const currentLine = facePoem.lines[facePoem.lines.length - 1];
     
-    // Crear el texto
-    const lineText = poemLine.words.join(' ');
-    
-    // Remover sprite anterior de esta línea si existe
-    const existingIndex = poemMeshesRef.current.findIndex(m => m.side === side && m.lineY === poemLine.y);
-    if (existingIndex >= 0) {
-      const existing = poemMeshesRef.current[existingIndex];
-      cubeGroup.remove(existing.mesh);
-      existing.mesh.material.map?.dispose();
-      existing.mesh.material.dispose();
-      poemMeshesRef.current.splice(existingIndex, 1);
-    }
-    
-    const sprite = createPoemText(lineText, side);
-    
-    // Posicionar según el lado
-    const halfCube = CUBE_SIZE / 2;
-    const offset = 0.3;
-    
-    switch (side) {
-      case 'front':
-        sprite.position.set(0, poemLine.y, halfCube + offset);
-        break;
-      case 'back':
-        sprite.position.set(0, poemLine.y, -halfCube - offset);
-        break;
-      case 'left':
-        sprite.position.set(-halfCube - offset, poemLine.y, 0);
-        break;
-      case 'right':
-        sprite.position.set(halfCube + offset, poemLine.y, 0);
-        break;
-    }
-    
-    cubeGroup.add(sprite);
-    poemMeshesRef.current.push({ mesh: sprite, side, lineY: poemLine.y });
+    currentLine.push(word);
     
     // Si la línea es muy larga, crear nueva línea
-    if (poemLine.words.length >= 4 + Math.floor(Math.random() * 3)) {
-      poemLine.y -= 0.4;
-      poemLine.words = [];
+    if (currentLine.length >= 3 + Math.floor(Math.random() * 3)) {
+      facePoem.lines.push([]);
       setScore(s => s + 10);
     }
-  }, [createPoemText]);
+    
+    // Actualizar el mesh de la cara
+    updateFacePoem(side);
+  }, [updateFacePoem]);
 
   // Inicializar Three.js
   useEffect(() => {
@@ -256,6 +308,29 @@ export default function CoinPushTerminal() {
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
+    // Post-processing
+    const composer = new EffectComposer(renderer);
+    composerRef.current = composer;
+    
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    
+    // Dithering + Pixelado
+    const ditheringPass = new ShaderPass(DitheringShader);
+    ditheringPass.uniforms.resolution.value = new THREE.Vector2(
+      containerRef.current.clientWidth,
+      containerRef.current.clientHeight
+    );
+    // Configuración del efecto
+    ditheringPass.uniforms.ditheringEnabled.value = true;
+    ditheringPass.uniforms.ditheringType.value = 0; // Bayer 4x4
+    ditheringPass.uniforms.colorLevels.value = 8;
+    ditheringPass.uniforms.ditherStrength.value = 0.8;
+    ditheringPass.uniforms.pixelateEnabled.value = true;
+    ditheringPass.uniforms.pixelSize.value = 2;
+    composer.addPass(ditheringPass);
+    ditheringPassRef.current = ditheringPass;
+
     const cubeGroup = new THREE.Group();
     scene.add(cubeGroup);
     cubeGroupRef.current = cubeGroup;
@@ -275,7 +350,7 @@ export default function CoinPushTerminal() {
       opacity: 0.4
     });
     const pusher = new THREE.Mesh(pusherGeometry, pusherMaterial);
-    pusher.position.y = CUBE_SIZE / 2 - 0.3;
+    pusher.position.y = PUSHER_BASE_Y;
     pusher.name = 'pusher';
     cubeGroup.add(pusher);
 
@@ -288,6 +363,13 @@ export default function CoinPushTerminal() {
       camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      composer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      if (ditheringPassRef.current) {
+        ditheringPassRef.current.uniforms.resolution.value.set(
+          containerRef.current.clientWidth,
+          containerRef.current.clientHeight
+        );
+      }
     };
     window.addEventListener('resize', handleResize);
 
@@ -298,10 +380,10 @@ export default function CoinPushTerminal() {
       autoRotationRef.current.y += AUTO_ROTATE_Y;
       autoRotationRef.current.tiltTime += AUTO_TILT_SPEED;
       
-      // Balanceo suave en X (oscilación sinusoidal)
+      // Balanceo suave en X
       const autoTiltX = Math.sin(autoRotationRef.current.tiltTime) * AUTO_TILT_AMPLITUDE;
       
-      // Input del usuario modifica la rotación target
+      // Input del usuario
       if (keysRef.current.left) targetRotationRef.current.y -= 0.03;
       if (keysRef.current.right) targetRotationRef.current.y += 0.03;
       if (keysRef.current.up) targetRotationRef.current.x -= 0.03;
@@ -312,26 +394,24 @@ export default function CoinPushTerminal() {
         targetRotationRef.current.x += mouseRef.current.y * 0.002;
       }
       
-      // Limitar rotación manual en X
       targetRotationRef.current.x = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, targetRotationRef.current.x));
       
-      // Suavizar rotación manual
       currentRotationRef.current.x += (targetRotationRef.current.x - currentRotationRef.current.x) * 0.08;
       currentRotationRef.current.y += (targetRotationRef.current.y - currentRotationRef.current.y) * 0.08;
       
-      // Combinar auto-rotación con rotación manual
       cubeGroup.rotation.x = currentRotationRef.current.x + autoTiltX;
       cubeGroup.rotation.y = currentRotationRef.current.y + autoRotationRef.current.y;
       
       pusherTimeRef.current += PUSHER_SPEED;
       const pusherMesh = cubeGroup.getObjectByName('pusher');
       if (pusherMesh) {
-        pusherMesh.position.y = CUBE_SIZE / 2 - 0.3 + Math.sin(pusherTimeRef.current) * PUSHER_AMPLITUDE;
+        pusherMesh.position.y = PUSHER_BASE_Y + Math.sin(pusherTimeRef.current) * PUSHER_AMPLITUDE;
       }
       
       updateWords(pusherMesh);
       
-      renderer.render(scene, camera);
+      // Usar composer en lugar de renderer directo
+      composer.render();
     };
     animate();
 
@@ -340,6 +420,7 @@ export default function CoinPushTerminal() {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      composer.dispose();
       renderer.dispose();
       if (containerRef.current && renderer.domElement) {
         containerRef.current.removeChild(renderer.domElement);
@@ -379,9 +460,9 @@ export default function CoinPushTerminal() {
       if (word.z > halfCube - 0.2) { word.z = halfCube - 0.2; word.vz *= -0.5; }
       if (word.z < -halfCube + 0.2) { word.z = -halfCube + 0.2; word.vz *= -0.5; }
       
-      // Palabra cayó - añadir al poema
+      // Palabra cayó - añadir al poema de la cara correspondiente
       if (word.y < -halfCube - 0.3) {
-        addToPoem(word.text, word.z);
+        addToPoem(word.text, word.x, word.z);
         
         cubeGroup.remove(word.mesh);
         word.mesh.material.map?.dispose();
@@ -425,30 +506,30 @@ export default function CoinPushTerminal() {
     setScore(s => s + 1);
   }, [createTextSprite]);
 
-  // Manejar submit - generar palabras basadas en cantidad de palabras escritas
+  // Manejar submit - solo genera palabras si hay texto
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     if (!isLoaded) return;
     
+    startAudio();
+    
     const text = input.trim();
     
-    if (text === '') {
-      // Sin texto = una palabra
-      addWord(getRandomWord());
-    } else {
-      // Contar palabras separadas por espacio
-      const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-      
-      // Generar esa cantidad de palabras del JSON
-      for (let i = 0; i < wordCount; i++) {
-        setTimeout(() => {
-          addWord(getRandomWord());
-        }, i * 100); // Pequeño delay entre cada palabra
-      }
+    // No hacer nada si el input está vacío
+    if (text === '') return;
+    
+    // Contar palabras separadas por espacio
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    
+    // Generar esa cantidad de palabras del JSON
+    for (let i = 0; i < wordCount; i++) {
+      setTimeout(() => {
+        addWord(getRandomWord());
+      }, i * 100);
     }
     
     setInput('');
-  }, [addWord, getRandomWord, isLoaded, input]);
+  }, [addWord, getRandomWord, isLoaded, input, startAudio]);
 
   // Manejar teclas
   useEffect(() => {
@@ -517,7 +598,8 @@ export default function CoinPushTerminal() {
 
   const handleContainerClick = useCallback((e) => {
     inputRef.current?.focus();
-  }, []);
+    startAudio();
+  }, [startAudio]);
 
   return (
     <div 

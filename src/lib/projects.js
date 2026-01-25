@@ -417,9 +417,19 @@ export const projects = {
       content: [
         {
           type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          src: '/images/Santiago1/Santiago1.jpg',
           alt: 'Santiago 1',
-          text: ''
+          text: '(2025)'
+        },
+        {
+          type: 'image',
+          src: '/images/DonanteUniversal/General.jpg',
+          alt: 'Vista general'
+        },
+        {
+          type: 'youtube',
+          id: 'ZhDt_kuc8x4',
+          title: 'Santiago 1 Video'
         }
       ]
     },
@@ -428,9 +438,14 @@ export const projects = {
       content: [
         {
           type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
+          src: '/images/Medium/Médium.jpg',
           alt: 'Médium',
-          text: ''
+          text: '(2025)'
+        },
+        {
+          type: 'image',
+          src: '/images/DonanteUniversal/General.jpg',
+          alt: 'Vista general'
         },
         {
           type: 'youtube',
@@ -444,13 +459,23 @@ export const projects = {
       content: [
         {
           type: 'image',
-          src: '/images/placeholder/Screenshot 2025-12-27 at 16.51.45.png',
-          alt: 'Donante Universal',
-          text: ''
+          src: '/images/DonanteUniversal/DonanteUniversal.jpg',
+          alt: 'Donante Universal detalle 1',
+          text: '(2025)'
+        },
+        {
+          type: 'image',
+          src: '/images/DonanteUniversal/DonanteUniversal_2.jpg',
+          alt: 'Donante Universal detalle 2'
+        },
+        {
+          type: 'image',
+          src: '/images/DonanteUniversal/General.jpg',
+          alt: 'Donante Universal vista general'
         },
         {
           type: 'youtube',
-          id: 'E1FBAKdZAc8',
+          id: 'CiTL2Tj8RLk',
           title: 'Donante Universal Video'
         }
       ]
@@ -470,6 +495,6 @@ export function getProjectContent(category, projectId) {
     ...project,
     category,
     projectId,
-    content: project.content || [] 
+    content: project.content || []
   };
 }

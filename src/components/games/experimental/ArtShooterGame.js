@@ -413,27 +413,37 @@ export class ArtShooterGame {
   }
 
   getArtworkPaths() {
-    // Recoger todas las imágenes definidas en src/lib/projects.js
-    // Devuelve objetos con { src, category, projectId } para poder navegar al proyecto
+    // Recoger solo la PRIMERA imagen de cada proyecto en artworks
+    // Devuelve objetos con { src, category, projectId, priority } para poder navegar al proyecto
     const artworks = [];
     const seenPaths = new Set();
     
+    // Proyectos prioritarios (más probabilidad de aparecer)
+    const priorityProjects = [
+      'donante-universal',
+      'medium',
+      'santiago-1',
+      'te-juro-que-es-primera-vez-que-me-pasa'
+    ];
+    
     Object.entries(projects).forEach(([categoryKey, category]) => {
       Object.entries(category).forEach(([projectId, project]) => {
-        (project.content || []).forEach(item => {
-          if (item.type === 'image' && typeof item.src === 'string') {
-            // Evitar duplicados por ruta
-            if (!seenPaths.has(item.src)) {
-              seenPaths.add(item.src);
-              artworks.push({
-                src: item.src,
-                category: categoryKey,
-                projectId: projectId,
-                title: project.title || projectId
-              });
-            }
-          }
-        });
+        // Solo buscar la primera imagen del proyecto
+        const firstImage = (project.content || []).find(item => 
+          item.type === 'image' && typeof item.src === 'string'
+        );
+        
+        if (firstImage && !seenPaths.has(firstImage.src)) {
+          seenPaths.add(firstImage.src);
+          const isPriority = priorityProjects.includes(projectId);
+          artworks.push({
+            src: firstImage.src,
+            category: categoryKey,
+            projectId: projectId,
+            title: project.title || projectId,
+            priority: isPriority
+          });
+        }
       });
     });
     
@@ -944,18 +954,32 @@ export class ArtShooterGame {
     }
     this.targets = [];
     this.currentTarget = null;
-    // Elegir 3 artworks únicos (ahora son objetos con { src, category, projectId, title })
-    const pickUnique = (arr, n) => {
+    // Elegir 3 artworks únicos con mayor probabilidad para obras prioritarias
+    const pickUniqueWeighted = (arr, n) => {
       const res = [];
       const used = new Set();
       const max = Math.min(n, arr.length);
+      
+      // Crear array ponderado: obras prioritarias aparecen 3 veces más
+      const weighted = [];
+      arr.forEach((item, idx) => {
+        const weight = item.priority ? 3 : 1;
+        for (let i = 0; i < weight; i++) {
+          weighted.push(idx);
+        }
+      });
+      
       while (res.length < max) {
-        const idx = Math.floor(Math.random() * arr.length);
-        if (!used.has(idx)) { used.add(idx); res.push(arr[idx]); }
+        const weightedIdx = Math.floor(Math.random() * weighted.length);
+        const idx = weighted[weightedIdx];
+        if (!used.has(idx)) { 
+          used.add(idx); 
+          res.push(arr[idx]); 
+        }
       }
       return res;
     };
-    const selectedArtworks = pickUnique(this.artworkPaths, 3);
+    const selectedArtworks = pickUniqueWeighted(this.artworkPaths, 3);
     const textures = await Promise.all(selectedArtworks.map((artwork) => this.textureManager.load(artwork.src)));
 
     // Material base compartido (sin mapa) para propiedades comunes

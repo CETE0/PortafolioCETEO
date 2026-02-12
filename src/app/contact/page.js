@@ -77,7 +77,7 @@ export default function Contact() {
         {
           period: '2025',
           title: '17 Bienal de Artes Mediales de Santiago',
-          institution: 'Colectivo TOMA - Participante',
+          institution: 'TOMA Colectivo - Asistente de Producción',
         },
       ];
     }
@@ -140,7 +140,7 @@ export default function Contact() {
       {
         period: '2025',
         title: '17th Santiago Media Arts Biennial',
-        institution: 'TOMA Collective - Participant',
+        institution: 'TOMA Colectivo - Production Assistant',
       },
     ];
   }, [lang]);

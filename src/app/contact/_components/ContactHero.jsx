@@ -29,8 +29,9 @@ export default function ContactHero() {
             <p className="text-black text-sm font-light leading-relaxed">
               {aboutText}
             </p>
-            <ContactCV />
           </ContactSection>
+
+          <ContactCV />
 
           <ContactSection id="social" title={t('contact.social')}>
             <div className="space-y-2">

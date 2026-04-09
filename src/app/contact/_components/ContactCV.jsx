@@ -16,7 +16,7 @@ export default function ContactCV() {
         id="contact-cv-toggle"
         aria-expanded={isOpen}
         aria-controls="contact-cv-panel"
-        className="flex items-center gap-2 text-sm font-light text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors"
+        className="flex items-center gap-3 text-lg font-light text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors"
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <span>{t('contact.cv')}</span>

@@ -161,7 +161,12 @@ export default function Contact() {
             <div className="space-y-4">
               <h2 className="text-xl font-light text-black">{t('contact.contact')}</h2>
               <div className="space-y-2 text-black text-sm font-light">
-                <p>contacto.ceteo@gmail.com</p>
+                <a
+                  href="mailto:contacto.ceteo@gmail.com"
+                  className="block text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors"
+                >
+                  contacto.ceteo@gmail.com
+                </a>
               </div>
             </div>
 
@@ -177,11 +182,11 @@ export default function Contact() {
             <div className="space-y-4">
               <h2 className="text-xl font-light text-black">{t('contact.social')}</h2>
               <div className="space-y-2">
-                <a 
-                  href="https://www.instagram.com/c.e.teo/" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="block text-sm text-black hover:text-red-500 transition-colors font-light"
+                <a
+                  href="https://www.instagram.com/c.e.teo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-sm text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors font-light"
                 >
                   Instagram
                 </a>
@@ -214,11 +219,15 @@ export default function Contact() {
         {/* CV Header/Toggle */}
         <motion.button
           type="button"
-          className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 transition-colors"
+          id="contact-cv-toggle"
+          aria-expanded={isCvOpen}
+          aria-controls="contact-cv-panel"
+          className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors"
           onClick={() => setIsCvOpen(!isCvOpen)}
         >
           <span className="text-xl font-light">{t('contact.cv')}</span>
           <motion.span
+            aria-hidden="true"
             animate={{ rotate: isCvOpen ? 180 : 0 }}
             transition={{ duration: 0.3 }}
           >
@@ -230,6 +239,9 @@ export default function Contact() {
         <AnimatePresence>
           {isCvOpen && (
             <motion.div
+              id="contact-cv-panel"
+              role="region"
+              aria-labelledby="contact-cv-toggle"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}

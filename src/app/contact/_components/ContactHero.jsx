@@ -1,10 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ABOUT_TEXT } from '../_data/about';
 import ContactSection from './ContactSection';
+import ContactCV from './ContactCV';
 
 export default function ContactHero() {
   const { t, lang } = useLanguage();
@@ -13,12 +13,7 @@ export default function ContactHero() {
   return (
     <div className="flex-grow flex items-center justify-center p-4 md:p-8">
       <div className="flex flex-col md:flex-row max-w-5xl w-full gap-8 md:gap-16">
-        <motion.div
-          className="w-full md:w-1/2 space-y-8 md:space-y-12"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="w-full md:w-1/2 space-y-8 md:space-y-12">
           <ContactSection id="contact" title={t('contact.contact')}>
             <div className="space-y-2 text-black text-sm font-light">
               <a
@@ -34,6 +29,7 @@ export default function ContactHero() {
             <p className="text-black text-sm font-light leading-relaxed">
               {aboutText}
             </p>
+            <ContactCV />
           </ContactSection>
 
           <ContactSection id="social" title={t('contact.social')}>
@@ -48,14 +44,9 @@ export default function ContactHero() {
               </a>
             </div>
           </ContactSection>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="w-full md:w-1/2 flex items-center justify-center"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <div className="w-full md:w-1/2 flex items-center justify-center">
           <div className="relative w-full">
             <Image
               src="/images/contact/gifcontacto.gif"
@@ -65,7 +56,7 @@ export default function ContactHero() {
               priority
             />
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

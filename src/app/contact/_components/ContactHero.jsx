@@ -31,8 +31,6 @@ export default function ContactHero() {
             </p>
           </ContactSection>
 
-          <ContactCV />
-
           <ContactSection id="social" title={t('contact.social')}>
             <div className="space-y-2">
               <a
@@ -45,6 +43,8 @@ export default function ContactHero() {
               </a>
             </div>
           </ContactSection>
+
+          <ContactCV />
         </div>
 
         <div className="w-full md:w-1/2 flex items-center justify-center">

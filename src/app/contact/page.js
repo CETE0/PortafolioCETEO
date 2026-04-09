@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ABOUT_TEXT } from './_data/about';
 import { CV_ITEMS } from './_data/cv';
+import ContactSection from './_components/ContactSection';
 
 export default function Contact() {
   const { t, lang } = useLanguage();
@@ -28,8 +29,7 @@ export default function Contact() {
             transition={{ duration: 0.5 }}
           >
             {/* Contact */}
-            <section aria-labelledby="contact-h-contact" className="space-y-4">
-              <h2 id="contact-h-contact" className="text-xl font-light text-black">{t('contact.contact')}</h2>
+            <ContactSection id="contact" title={t('contact.contact')}>
               <div className="space-y-2 text-black text-sm font-light">
                 <a
                   href="mailto:contacto.ceteo@gmail.com"
@@ -38,19 +38,17 @@ export default function Contact() {
                   contacto.ceteo@gmail.com
                 </a>
               </div>
-            </section>
+            </ContactSection>
 
             {/* About */}
-            <section aria-labelledby="contact-h-about" className="space-y-4">
-              <h2 id="contact-h-about" className="text-xl font-light text-black">{t('contact.about')}</h2>
+            <ContactSection id="about" title={t('contact.about')}>
               <p className="text-black text-sm font-light leading-relaxed">
                 {aboutText}
               </p>
-            </section>
+            </ContactSection>
 
             {/* Social */}
-            <section aria-labelledby="contact-h-social" className="space-y-4">
-              <h2 id="contact-h-social" className="text-xl font-light text-black">{t('contact.social')}</h2>
+            <ContactSection id="social" title={t('contact.social')}>
               <div className="space-y-2">
                 <a
                   href="https://www.instagram.com/c.e.teo/"
@@ -61,7 +59,7 @@ export default function Contact() {
                   Instagram
                 </a>
               </div>
-            </section>
+            </ContactSection>
           </motion.div>
 
           {/* Columna derecha - GIF */}

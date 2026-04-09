@@ -147,6 +147,7 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <h1 className="sr-only">{t('sidebar.contact')}</h1>
       {/* Contenido principal */}
       <div className="flex-grow flex items-center justify-center p-4 md:p-8">
         <div className="flex flex-col md:flex-row max-w-5xl w-full gap-8 md:gap-16">
@@ -158,8 +159,8 @@ export default function Contact() {
             transition={{ duration: 0.5 }}
           >
             {/* Contact */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">{t('contact.contact')}</h2>
+            <section aria-labelledby="contact-h-contact" className="space-y-4">
+              <h2 id="contact-h-contact" className="text-xl font-light text-black">{t('contact.contact')}</h2>
               <div className="space-y-2 text-black text-sm font-light">
                 <a
                   href="mailto:contacto.ceteo@gmail.com"
@@ -168,19 +169,19 @@ export default function Contact() {
                   contacto.ceteo@gmail.com
                 </a>
               </div>
-            </div>
+            </section>
 
             {/* About */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">{t('contact.about')}</h2>
+            <section aria-labelledby="contact-h-about" className="space-y-4">
+              <h2 id="contact-h-about" className="text-xl font-light text-black">{t('contact.about')}</h2>
               <p className="text-black text-sm font-light leading-relaxed">
                 {aboutText}
               </p>
-            </div>
+            </section>
 
             {/* Social */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-light text-black">{t('contact.social')}</h2>
+            <section aria-labelledby="contact-h-social" className="space-y-4">
+              <h2 id="contact-h-social" className="text-xl font-light text-black">{t('contact.social')}</h2>
               <div className="space-y-2">
                 <a
                   href="https://www.instagram.com/c.e.teo/"
@@ -191,7 +192,7 @@ export default function Contact() {
                   Instagram
                 </a>
               </div>
-            </div>
+            </section>
           </motion.div>
 
           {/* Columna derecha - GIF */}

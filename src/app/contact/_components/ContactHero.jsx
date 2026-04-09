@@ -11,7 +11,7 @@ export default function ContactHero() {
   const aboutText = ABOUT_TEXT[lang] ?? ABOUT_TEXT.en;
 
   return (
-    <div className="flex-grow flex items-center justify-center p-4 md:p-8">
+    <div className="flex-grow flex items-start justify-center p-4 md:p-8">
       <div className="flex flex-col md:flex-row max-w-5xl w-full gap-8 md:gap-16">
         <div className="w-full md:w-1/2 space-y-8 md:space-y-12">
           <ContactSection id="contact" title={t('contact.contact')}>

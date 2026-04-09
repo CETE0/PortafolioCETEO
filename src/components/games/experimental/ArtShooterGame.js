@@ -184,6 +184,7 @@ export class ArtShooterGame {
     this.container = container;
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
+    this.isDisposing = false; // §5.2: gate destroyTarget's onNavigate during teardown
     this.hasEnteredPointerLockOnce = false; // Para distinguir estado inicial vs salir con ESC
     // Gate general de redirección (se inicializa después de detectar isTouchDevice)
     this.redirectEnabled = true;
@@ -1332,8 +1333,14 @@ export class ArtShooterGame {
     if (this.currentTarget === root) this.currentTarget = null;
     
     // Navegar al proyecto correspondiente de forma instantánea
-    // Solo navegar si no estamos ya navegando (evita navegaciones múltiples)
-    if (projectInfo && this.onNavigate && !this.isNavigating && this.redirectEnabled) {
+    // Solo navegar si no estamos ya navegando ni en dispose() (§5.2)
+    if (
+      projectInfo &&
+      this.onNavigate &&
+      !this.isNavigating &&
+      !this.isDisposing &&
+      this.redirectEnabled
+    ) {
       this.isNavigating = true;
       this.isActive = false; // Desactivar el juego para evitar más disparos
       this.onNavigate(`/${projectInfo.category}/${projectInfo.projectId}`);
@@ -2345,6 +2352,7 @@ export class ArtShooterGame {
   }
 
   dispose() {
+    this.isDisposing = true;
     this.isActive = false;
     window.removeEventListener('resize', this.onResize);
     if (!this.isTouchDevice && this.container) {

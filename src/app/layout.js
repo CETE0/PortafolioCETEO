@@ -1,4 +1,5 @@
 import { DM_Sans, JetBrains_Mono } from 'next/font/google'
+import Script from 'next/script';
 import './globals.css'
 import Sidebar from '../components/layout/Sidebar'
 import MobileMenu from '../components/layout/MobileMenu'
@@ -58,6 +59,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        {process.env.NODE_ENV === 'development' && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
       </head>
       <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans bg-white`}>
         <LanguageProvider>

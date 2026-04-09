@@ -13,13 +13,6 @@ export const dict = {
       texts: 'TEXTS',
       contact: 'CONTACT-ABOUT',
     },
-    home: {
-      loadingAssets: 'Loading Assets...',
-      start: '[START]',
-      tapToStart: '[tap/click to start]',
-      score: "shoot em' up [score:{score}]",
-      backgroundAlt: 'Background',
-    },
     project: {
       loadingGame: 'Loading game...',
       noContent: 'No content available',
@@ -54,13 +47,6 @@ export const dict = {
       experimental: 'EXPERIMENTAL',
       texts: 'TEXTOS',
       contact: 'CONTACTO-ACERCA',
-    },
-    home: {
-      loadingAssets: 'Cargando recursos...',
-      start: '[INICIAR]',
-      tapToStart: '[toca/clic para empezar]',
-      score: "shoot em' up [puntaje:{score}]",
-      backgroundAlt: 'Fondo',
     },
     project: {
       loadingGame: 'Cargando juego...',

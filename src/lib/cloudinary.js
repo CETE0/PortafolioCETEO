@@ -192,12 +192,6 @@ export const imageMap = {
   // FTW
   '/images/FTW/1.JPG': 'portfolio/portfolio/ftw/1',
   '/images/FTW/2.jpeg': 'portfolio/portfolio/ftw/2',
-  
-  // Game assets (mantener locales por ahora)
-  '/images/game/background.png': '/images/game/background.png',
-  '/images/game/plinth/1.png': '/images/game/plinth/1.png',
-  '/images/game/object/1.png': '/images/game/object/1.png',
-  '/images/game/leg/1.png': '/images/game/leg/1.png',
 };
 
 /**

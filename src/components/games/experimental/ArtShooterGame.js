@@ -214,6 +214,12 @@ export class ArtShooterGame {
     this.controls = null;
     this.textureLoader = new THREE.TextureLoader();
     this.raycaster = new THREE.Raycaster();
+    // §7.2 scratch objects for head-look blend (allocated once to avoid GC in animate())
+    this._headLookEye = new THREE.Vector3();
+    this._headLookUp = new THREE.Vector3(0, 1, 0);
+    this._headLookMatrix = new THREE.Matrix4();
+    this._headLookTargetQuat = new THREE.Quaternion();
+    this._headLookParentQuat = new THREE.Quaternion();
     this.targets = [];
     this.currentTarget = null;
     this.rowGroup = null;
@@ -2303,6 +2309,21 @@ export class ArtShooterGame {
             break;
           default:
             this.animateWalk(anim, amplitudes, m.userData.limbs, m, baseY2);
+        }
+
+        // §7.2: blend head toward camera (gentle eye contact)
+        if (head && head.parent) {
+          head.getWorldPosition(this._headLookEye);
+          this._headLookMatrix.lookAt(
+            this._headLookEye,
+            this.camera.position,
+            this._headLookUp
+          );
+          this._headLookTargetQuat.setFromRotationMatrix(this._headLookMatrix);
+          head.parent.getWorldQuaternion(this._headLookParentQuat);
+          this._headLookParentQuat.invert();
+          this._headLookTargetQuat.premultiply(this._headLookParentQuat);
+          head.quaternion.slerp(this._headLookTargetQuat, 0.05);
         }
       }
     });

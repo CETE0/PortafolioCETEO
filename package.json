@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:anim": "node scripts/tests/anim/run-all.mjs",
     "upload-images": "node scripts/upload-to-cloudinary.js"
   },
   "dependencies": {

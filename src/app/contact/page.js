@@ -1,19 +1,16 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ABOUT_TEXT } from './_data/about';
-import { CV_ITEMS } from './_data/cv';
 import ContactSection from './_components/ContactSection';
+import ContactCV from './_components/ContactCV';
 
 export default function Contact() {
   const { t, lang } = useLanguage();
-  const [isCvOpen, setIsCvOpen] = useState(false);
 
   const aboutText = ABOUT_TEXT[lang] ?? ABOUT_TEXT.en;
-  const cvItems = CV_ITEMS[lang] ?? CV_ITEMS.en;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -83,52 +80,7 @@ export default function Contact() {
       </div>
 
       {/* CV Section */}
-      <div>
-        {/* CV Header/Toggle */}
-        <motion.button
-          type="button"
-          id="contact-cv-toggle"
-          aria-expanded={isCvOpen}
-          aria-controls="contact-cv-panel"
-          className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 focus-visible:text-red-500 focus:outline-none transition-colors"
-          onClick={() => setIsCvOpen(!isCvOpen)}
-        >
-          <span className="text-xl font-light">{t('contact.cv')}</span>
-          <motion.span
-            aria-hidden="true"
-            animate={{ rotate: isCvOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            ↓
-          </motion.span>
-        </motion.button>
-
-        {/* CV Content */}
-        <AnimatePresence>
-          {isCvOpen && (
-            <motion.div
-              id="contact-cv-panel"
-              role="region"
-              aria-labelledby="contact-cv-toggle"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="px-4 md:px-8 py-4 space-y-4">
-                {cvItems.map((item, index) => (
-                  <div key={index} className="space-y-1">
-                    <p className="text-sm font-medium text-black">{item.period}</p>
-                    <p className="text-sm text-black">{item.title}</p>
-                    <p className="text-sm text-black/70">{item.institution}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <ContactCV />
     </div>
   );
 }

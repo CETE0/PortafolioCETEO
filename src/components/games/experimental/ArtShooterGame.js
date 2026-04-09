@@ -2232,11 +2232,9 @@ export class ArtShooterGame {
         m.userData.orbitAngle += dAngle;
         const r = GAME_CONFIG.orbit.radius;
         const angle = m.userData.orbitAngle;
-        const baseY = m.userData.baseY || m.position.y;
         m.position.x = Math.cos(angle) * r;
         m.position.z = Math.sin(angle) * r;
-        // mantener bob vertical adicional más abajo
-        if (!m.userData.baseY) m.userData.baseY = baseY;
+        // §5.4: baseY ahora vive solo en anim.baseY (más abajo)
       }
       // Sistema de animación mejorado con múltiples tipos
       const anim = this.animationStates.get(m);

@@ -73,6 +73,11 @@ const GAME_CONFIG = {
   shotOverlay: {
     durationMs: 320, // tiempo visible del sprite de disparo
   },
+  hitReaction: {
+    durationMs: 180,
+    leanBackRad: 0.45,
+    scaleBoost: 1.05,
+  },
   animation: {
     speedBase: 1.0,
     speedJitter: 0.4,
@@ -1281,20 +1286,33 @@ export class ArtShooterGame {
     if (intersections.length > 0) {
       const hit = intersections[0];
       const mesh = hit.object;
-      // Marca de impacto desactivada
-      this.destroyTarget(mesh);
+      this.triggerHit(mesh); // §7.3: flinch antes de la explosión real
       this.updateScore(100);
-      if (this.targets.length === 0) {
-        if (this.rowGroup) {
-          if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
-          this.rowGroup = null;
-        }
-        this.spawnSingleTarget();
-      }
+      // El respawn lo gestiona destroyTarget() cuando se cae el último target;
+      // aquí no comprobamos targets.length porque el target sigue vivo durante el flinch.
       if (navigator.vibrate) navigator.vibrate(20);
     } else {
       this.updateScore(0);
     }
+  }
+
+  // §7.3: registra el flinch y delega a destroyTarget tras hitReaction.durationMs
+  triggerHit(mesh) {
+    let root = mesh;
+    while (root.parent && !this.targets.includes(root)) {
+      root = root.parent;
+    }
+    if (!this.targets.includes(root)) return;
+    if (root.userData?.hitState) return;
+
+    const startedAt = performance.now();
+    const dur = GAME_CONFIG.hitReaction.durationMs;
+    root.userData.hitState = { startedAt, dur };
+
+    setTimeout(() => {
+      if (this.isDisposing) return;
+      this.destroyTarget(root);
+    }, dur);
   }
 
   destroyTarget(mesh) {
@@ -1358,6 +1376,15 @@ export class ArtShooterGame {
       this.isNavigating = true;
       this.isActive = false; // Desactivar el juego para evitar más disparos
       this.onNavigate(`/${projectInfo.category}/${projectInfo.projectId}`);
+    }
+
+    // §7.3: respawn cuando se cae el último target del lote
+    if (!this.isDisposing && this.targets.length === 0) {
+      if (this.rowGroup) {
+        if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
+        this.rowGroup = null;
+      }
+      this.spawnSingleTarget();
     }
   }
 
@@ -2234,6 +2261,23 @@ export class ArtShooterGame {
     const delta = (this.clock && this.clock.getDelta) ? this.clock.getDelta() : 1/60;
     const scale = 60 * delta;
     this.targets.forEach((m) => {
+      // §7.3: si el personaje está flincheando, anular animación normal y aplicar pose de impacto
+      if (m.userData?.hitState) {
+        const { startedAt, dur } = m.userData.hitState;
+        const t = Math.min(1, (performance.now() - startedAt) / dur);
+        const arc = Math.sin(t * Math.PI);
+        const cfg = GAME_CONFIG.hitReaction;
+        const limbs = m.userData?.limbs;
+        if (limbs?.torso) limbs.torso.rotation.x = -cfg.leanBackRad * arc;
+        if (limbs?.pelvis) limbs.pelvis.rotation.x = -cfg.leanBackRad * 0.5 * arc;
+        if (m.userData._baseUniformScale == null) {
+          m.userData._baseUniformScale = m.scale.x;
+        }
+        const flinchScale = 1 + (cfg.scaleBoost - 1) * arc;
+        m.scale.setScalar(m.userData._baseUniformScale * flinchScale);
+        return;
+      }
+
       const s = this.rotationSpeeds.get(m);
       if (s) {
         m.rotation.x += s.x * scale;

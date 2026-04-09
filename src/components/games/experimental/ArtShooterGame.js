@@ -121,6 +121,9 @@ const GAME_CONFIG = {
     upwardBoost: 1.0,
     gravity: 3.0,
     lifetimeMs: 1200,
+    // Tiempo que dejamos jugar la explosión antes de redirigir al proyecto.
+    // Lo bastante para ver el bloom inicial sin que la espera moleste.
+    navDelayMs: 450,
   },
 };
 
@@ -208,6 +211,7 @@ export class ArtShooterGame {
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
     this.isDisposing = false; // §5.2: gate destroyTarget's onNavigate during teardown
+    this.pendingNavigateTimeout = null; // setTimeout id de la redirección diferida
     this.hasEnteredPointerLockOnce = false; // Para distinguir estado inicial vs salir con ESC
     // Gate general de redirección (se inicializa después de detectar isTouchDevice)
     this.redirectEnabled = true;
@@ -957,6 +961,67 @@ export class ArtShooterGame {
     this.plinthMesh = null;
   }
 
+  // Crea un sprite de texto (canvas → CanvasTexture) con el título del artwork.
+  // Se usa como etiqueta flotante sobre la cabeza de cada modelo.
+  createLabelSprite(text) {
+    const canvas = document.createElement('canvas');
+    const W = 1024;
+    const H = 256;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const label = (text || '').toString().trim() || '—';
+    const padding = 40;
+    const maxTextWidth = W - padding * 2;
+
+    // Ajustar tamaño de fuente para que el título quepa en el canvas
+    let fontSize = 140;
+    const fontFamily = '-apple-system, "Helvetica Neue", Arial, sans-serif';
+    do {
+      ctx.font = `700 ${fontSize}px ${fontFamily}`;
+      if (ctx.measureText(label).width <= maxTextWidth) break;
+      fontSize -= 6;
+    } while (fontSize > 36);
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    // Trazo oscuro grueso para legibilidad sobre cualquier fondo
+    ctx.strokeStyle = 'rgba(10, 15, 25, 0.95)';
+    ctx.lineWidth = Math.max(10, fontSize * 0.2);
+    ctx.strokeText(label, W / 2, H / 2);
+
+    // Relleno blanco
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(label, W / 2, H / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.anisotropy = this.renderer?.capabilities?.getMaxAnisotropy?.() || 1;
+    texture.needsUpdate = true;
+
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,   // siempre visible por encima de los modelos
+      depthWrite: false,
+      fog: false,
+    });
+    const sprite = new THREE.Sprite(material);
+    // Tamaño en unidades locales del modelo (el grupo padre tiene scale≈1.43
+    // por el targetHeight de createLowPolyHuman, por lo que el sprite queda
+    // visible a ~2.3 × 0.58 en mundo). Aspect del canvas = 4:1.
+    sprite.scale.set(1.6, 0.4, 1);
+    sprite.renderOrder = 999;
+    return sprite;
+  }
+
   async spawnSingleTarget() {
     if (!this.artworkPaths?.length) return;
     // Limpiar fila previa si existe
@@ -968,6 +1033,12 @@ export class ArtShooterGame {
             else { if (child.material.map) child.material.map.dispose(); child.material.dispose?.(); }
           }
           if (child.geometry) child.geometry.dispose();
+        } else if (child.isSprite) {
+          // Sprites de etiqueta con CanvasTexture: nunca son compartidos
+          if (child.material) {
+            if (child.material.map) child.material.map.dispose();
+            child.material.dispose?.();
+          }
         }
       });
       if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
@@ -1027,11 +1098,14 @@ export class ArtShooterGame {
       return m;
     });
 
-    // Determinar alturas y anchos
+    // Determinar alturas y anchos (los modelos aún están en la posición (0,0,0),
+    // así que el bbox en mundo coincide con el bbox escalado del modelo)
     let maxWidth = 0;
     let maxHeight = 0;
+    const boxes = [];
     const sizes = models.map((m) => {
       const bb = new THREE.Box3().setFromObject(m);
+      boxes.push(bb);
       const sz = new THREE.Vector3();
       bb.getSize(sz);
       maxWidth = Math.max(maxWidth, sz.x);
@@ -1051,6 +1125,19 @@ export class ArtShooterGame {
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       m.position.set(x, h / 2 + 0.02, z);
+
+      // Etiqueta con el título del artwork sobre la cabeza.
+      // boxes[i].max.y está en unidades de mundo (m.position era aún 0),
+      // así que al dividirlo por el scale del modelo obtenemos la coordenada
+      // local donde debe ir el sprite como hijo del grupo escalado.
+      const artworkInfo = selectedArtworks[i];
+      const sy = m.scale.y || 1;
+      const localTopY = boxes[i].max.y / sy;
+      const label = this.createLabelSprite(artworkInfo.title);
+      label.position.set(0, localTopY + 0.25, 0);
+      m.add(label);
+      m.userData.titleLabel = label;
+
       rowGroup.add(m);
     });
     // El grupo se ancla en el origen; cada modelo sigue su propia órbita en animate()
@@ -1326,7 +1413,20 @@ export class ArtShooterGame {
     
     // Obtener información del proyecto antes de destruir para navegación
     const projectInfo = root.userData?.projectInfo;
-    
+
+    // Quitar y disponer la etiqueta de título antes de calcular el bbox de
+    // la explosión, para que los fragmentos no se generen a la altura del label.
+    const labelsToDispose = [];
+    root.traverse?.((c) => { if (c.isSprite) labelsToDispose.push(c); });
+    labelsToDispose.forEach((label) => {
+      if (label.parent) label.parent.remove(label);
+      if (label.material) {
+        if (label.material.map) label.material.map.dispose();
+        label.material.dispose?.();
+      }
+    });
+    if (root.userData) root.userData.titleLabel = null;
+
     // No disponer sharedMaterial; se reutiliza. Manejar grupos.
     // Crear explosión antes de eliminar
     this.createExplosionFromObject(root);
@@ -1363,23 +1463,35 @@ export class ArtShooterGame {
     }
     if (root.parent) root.parent.remove(root); else this.scene.remove(root);
     if (this.currentTarget === root) this.currentTarget = null;
-    
-    // Navegar al proyecto correspondiente de forma instantánea
-    // Solo navegar si no estamos ya navegando ni en dispose() (§5.2)
-    if (
+
+    // Navegar al proyecto correspondiente, pero esperando un poco para que
+    // la explosión se vea jugar. Bloqueamos el input de inmediato (isActive
+    // e isNavigating) para que el jugador no pueda disparar ni redisparar
+    // durante la espera, pero animate() sigue corriendo y la explosión se
+    // dibuja hasta que finalmente llamamos a onNavigate().
+    const willNavigate = (
       projectInfo &&
       this.onNavigate &&
       !this.isNavigating &&
       !this.isDisposing &&
       this.redirectEnabled
-    ) {
+    );
+    if (willNavigate) {
       this.isNavigating = true;
       this.isActive = false; // Desactivar el juego para evitar más disparos
-      this.onNavigate(`/${projectInfo.category}/${projectInfo.projectId}`);
+      const dest = `/${projectInfo.category}/${projectInfo.projectId}`;
+      const delay = GAME_CONFIG.explosion.navDelayMs;
+      this.pendingNavigateTimeout = setTimeout(() => {
+        this.pendingNavigateTimeout = null;
+        if (this.isDisposing) return;
+        this.onNavigate(dest);
+      }, delay);
     }
 
-    // §7.3: respawn cuando se cae el último target del lote
-    if (!this.isDisposing && this.targets.length === 0) {
+    // §7.3: respawn cuando se cae el último target del lote.
+    // No respawnear si ya estamos navegando: la nueva fila se vería ~850ms
+    // antes de que el router cambie de página y sería visualmente raro.
+    if (!this.isDisposing && !this.isNavigating && this.targets.length === 0) {
       if (this.rowGroup) {
         if (this.rowGroup.parent) this.rowGroup.parent.remove(this.rowGroup);
         this.rowGroup = null;
@@ -2427,6 +2539,12 @@ export class ArtShooterGame {
   dispose() {
     this.isDisposing = true;
     this.isActive = false;
+    // Cancelar redirección pendiente si el componente se desmonta antes
+    // de que la explosión termine de jugar.
+    if (this.pendingNavigateTimeout) {
+      clearTimeout(this.pendingNavigateTimeout);
+      this.pendingNavigateTimeout = null;
+    }
     window.removeEventListener('resize', this.onResize);
     if (!this.isTouchDevice && this.container) {
       this.container.removeEventListener('click', this.onDocumentClick);

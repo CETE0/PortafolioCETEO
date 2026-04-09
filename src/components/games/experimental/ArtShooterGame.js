@@ -501,6 +501,7 @@ export class ArtShooterGame {
     const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.18), sharedMaterial);
     shoulders.position.set(0, pelvisHeight + torsoHeight - 0.06, 0);
     group.add(shoulders);
+    shoulders.userData.baseY = shoulders.position.y;
 
     // Cuello
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, neckHeight, 6), sharedMaterial);
@@ -1990,8 +1991,8 @@ export class ArtShooterGame {
     }
 
     // Hombros suben/bajan con la respiración
-    if (shoulders) {
-      shoulders.position.y = (shoulders.position.y || 0) + Math.sin(anim.t2) * 0.005;
+    if (shoulders && shoulders.userData?.baseY != null) {
+      shoulders.position.y = shoulders.userData.baseY + Math.sin(anim.t2) * 0.005;
     }
 
     // Pequeño bob de respiración

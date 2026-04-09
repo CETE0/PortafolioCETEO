@@ -202,7 +202,6 @@ export default function Contact() {
                 alt={t('contact.altGif')}
                 width={800}
                 height={1067}
-                className="w-auto h-auto"
                 priority
               />
             </div>
@@ -211,12 +210,10 @@ export default function Contact() {
       </div>
 
       {/* CV Section */}
-      <motion.div 
-        className="border-t border-white"
-        initial={false}
-      >
+      <div>
         {/* CV Header/Toggle */}
         <motion.button
+          type="button"
           className="w-full py-4 px-4 md:px-8 flex items-center justify-between text-black hover:text-red-500 transition-colors"
           onClick={() => setIsCvOpen(!isCvOpen)}
         >
@@ -251,7 +248,7 @@ export default function Contact() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 }

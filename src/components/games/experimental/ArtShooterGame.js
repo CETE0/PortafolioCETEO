@@ -119,6 +119,24 @@ const GAME_CONFIG = {
   },
 };
 
+// §7.4: Geometrías compartidas entre todos los humanoides procedurales.
+// Se construyen una vez y se reutilizan; createLowPolyHuman() ya no
+// instancia BoxGeometry por personaje.
+const HUMAN_GEOMETRY = Object.freeze({
+  torso:     new THREE.BoxGeometry(0.5, 0.7, 0.25),
+  pelvis:    new THREE.BoxGeometry(0.4, 0.3, 0.22),
+  shoulders: new THREE.BoxGeometry(0.7, 0.12, 0.18),
+  neck:      new THREE.CylinderGeometry(0.08, 0.1, 0.08, 6),
+  head:      new THREE.BoxGeometry(0.18 * 1.4, 0.18 * 1.4, 0.18 * 1.4),
+  upperArm:  new THREE.BoxGeometry(0.11, 0.35, 0.11),
+  lowerArm:  new THREE.BoxGeometry(0.10, 0.35, 0.10),
+  hand:      new THREE.BoxGeometry(0.14, 0.12, 0.14),
+  upperLeg:  new THREE.BoxGeometry(0.14, 0.45, 0.14),
+  lowerLeg:  new THREE.BoxGeometry(0.13, 0.45, 0.13),
+  foot:      new THREE.BoxGeometry(0.25, 0.08, 0.35),
+});
+const HUMAN_GEOMETRY_SET = new Set(Object.values(HUMAN_GEOMETRY));
+
 // Gestor de texturas con caché LRU y prefetch utilizando ImageBitmapLoader
 class TextureManager {
   constructor(renderer, maxEntries = 10, anisotropy = 2) {
@@ -489,122 +507,112 @@ export class ArtShooterGame {
     const lowerLegLength = 0.45;
 
     // Torso
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, torsoHeight, 0.25), sharedMaterial);
+    const torso = new THREE.Mesh(HUMAN_GEOMETRY.torso, sharedMaterial);
     torso.position.set(0, pelvisHeight + torsoHeight / 2, 0);
     group.add(torso);
 
     // Pelvis
-    const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.4, pelvisHeight, 0.22), sharedMaterial);
+    const pelvis = new THREE.Mesh(HUMAN_GEOMETRY.pelvis, sharedMaterial);
     pelvis.position.set(0, pelvisHeight / 2, 0);
     group.add(pelvis);
 
     // Hombros
-    const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.18), sharedMaterial);
+    const shoulders = new THREE.Mesh(HUMAN_GEOMETRY.shoulders, sharedMaterial);
     shoulders.position.set(0, pelvisHeight + torsoHeight - 0.06, 0);
     group.add(shoulders);
     shoulders.userData.baseY = shoulders.position.y;
 
     // Cuello
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, neckHeight, 6), sharedMaterial);
+    const neck = new THREE.Mesh(HUMAN_GEOMETRY.neck, sharedMaterial);
     neck.position.set(0, pelvisHeight + torsoHeight + neckHeight / 2, 0);
     group.add(neck);
 
     // Cabeza (cubo)
     const headSize = headRadius * 1.4; // Tamaño del cubo basado en el radio original
-    const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize), sharedMaterial);
+    const head = new THREE.Mesh(HUMAN_GEOMETRY.head, sharedMaterial);
     head.position.set(0, pelvisHeight + torsoHeight + neckHeight + headSize / 2, 0);
     group.add(head);
 
     // Brazos con pivotes de articulación (hombro y codo)
-    const armRadius = 0.11;
-    const forearmRadius = 0.1;
     const armOffsetX = 0.35;
     const shoulderY = shoulders.position.y;
-    const upperArmGeo = new THREE.BoxGeometry(armRadius, upperArmLength, armRadius);
-    const lowerArmGeo = new THREE.BoxGeometry(forearmRadius, lowerArmLength, forearmRadius);
 
     const lShoulderPivot = new THREE.Object3D();
     lShoulderPivot.position.set(-armOffsetX, shoulderY, 0);
     group.add(lShoulderPivot);
-    const lUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
+    const lUpperArm = new THREE.Mesh(HUMAN_GEOMETRY.upperArm, sharedMaterial);
     lUpperArm.position.set(0, -upperArmLength / 2, 0);
     lShoulderPivot.add(lUpperArm);
     const lElbowPivot = new THREE.Object3D();
     lElbowPivot.position.set(0, -upperArmLength, 0);
     lShoulderPivot.add(lElbowPivot);
-    const lLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
+    const lLowerArm = new THREE.Mesh(HUMAN_GEOMETRY.lowerArm, sharedMaterial);
     lLowerArm.position.set(0, -lowerArmLength / 2, 0);
     lElbowPivot.add(lLowerArm);
 
     const rShoulderPivot = new THREE.Object3D();
     rShoulderPivot.position.set(armOffsetX, shoulderY, 0);
     group.add(rShoulderPivot);
-    const rUpperArm = new THREE.Mesh(upperArmGeo, sharedMaterial);
+    const rUpperArm = new THREE.Mesh(HUMAN_GEOMETRY.upperArm, sharedMaterial);
     rUpperArm.position.set(0, -upperArmLength / 2, 0);
     rShoulderPivot.add(rUpperArm);
     const rElbowPivot = new THREE.Object3D();
     rElbowPivot.position.set(0, -upperArmLength, 0);
     rShoulderPivot.add(rElbowPivot);
-    const rLowerArm = new THREE.Mesh(lowerArmGeo, sharedMaterial);
+    const rLowerArm = new THREE.Mesh(HUMAN_GEOMETRY.lowerArm, sharedMaterial);
     rLowerArm.position.set(0, -lowerArmLength / 2, 0);
     rElbowPivot.add(rLowerArm);
 
     // Muñecas y manos
-    const handGeo = new THREE.BoxGeometry(0.14, 0.12, 0.14);
     const lWristPivot = new THREE.Object3D();
     lWristPivot.position.set(0, -lowerArmLength, 0);
     lElbowPivot.add(lWristPivot);
-    const lHand = new THREE.Mesh(handGeo, sharedMaterial);
+    const lHand = new THREE.Mesh(HUMAN_GEOMETRY.hand, sharedMaterial);
     lHand.position.set(0, -0.12 / 2, 0.06);
     lWristPivot.add(lHand);
 
     const rWristPivot = new THREE.Object3D();
     rWristPivot.position.set(0, -lowerArmLength, 0);
     rElbowPivot.add(rWristPivot);
-    const rHand = new THREE.Mesh(handGeo, sharedMaterial);
+    const rHand = new THREE.Mesh(HUMAN_GEOMETRY.hand, sharedMaterial);
     rHand.position.set(0, -0.12 / 2, 0.06);
     rWristPivot.add(rHand);
 
     // Piernas
-    const legRadius = 0.14;
-    const shinRadius = 0.13;
     const hipOffsetX = 0.2;
     const hipY = pelvis.position.y - pelvisHeight / 2;
-    const upperLegGeo = new THREE.BoxGeometry(legRadius, upperLegLength, legRadius);
-    const lowerLegGeo = new THREE.BoxGeometry(shinRadius, lowerLegLength, shinRadius);
 
     const lHipPivot = new THREE.Object3D();
     lHipPivot.position.set(-hipOffsetX, hipY, 0);
     group.add(lHipPivot);
-    const lUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
+    const lUpperLeg = new THREE.Mesh(HUMAN_GEOMETRY.upperLeg, sharedMaterial);
     lUpperLeg.position.set(0, -upperLegLength / 2, 0);
     lHipPivot.add(lUpperLeg);
     const lKneePivot = new THREE.Object3D();
     lKneePivot.position.set(0, -upperLegLength, 0);
     lHipPivot.add(lKneePivot);
-    const lLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
+    const lLowerLeg = new THREE.Mesh(HUMAN_GEOMETRY.lowerLeg, sharedMaterial);
     lLowerLeg.position.set(0, -lowerLegLength / 2, 0);
     lKneePivot.add(lLowerLeg);
 
     const rHipPivot = new THREE.Object3D();
     rHipPivot.position.set(hipOffsetX, hipY, 0);
     group.add(rHipPivot);
-    const rUpperLeg = new THREE.Mesh(upperLegGeo, sharedMaterial);
+    const rUpperLeg = new THREE.Mesh(HUMAN_GEOMETRY.upperLeg, sharedMaterial);
     rUpperLeg.position.set(0, -upperLegLength / 2, 0);
     rHipPivot.add(rUpperLeg);
     const rKneePivot = new THREE.Object3D();
     rKneePivot.position.set(0, -upperLegLength, 0);
     rHipPivot.add(rKneePivot);
-    const rLowerLeg = new THREE.Mesh(lowerLegGeo, sharedMaterial);
+    const rLowerLeg = new THREE.Mesh(HUMAN_GEOMETRY.lowerLeg, sharedMaterial);
     rLowerLeg.position.set(0, -lowerLegLength / 2, 0);
     rKneePivot.add(rLowerLeg);
 
     // Tobillos y pies (con pivote de tobillo)
-    const footGeo = new THREE.BoxGeometry(0.25, 0.08, 0.35);
     const lAnklePivot = new THREE.Object3D();
     lAnklePivot.position.set(0, -lowerLegLength, 0);
     lKneePivot.add(lAnklePivot);
-    const lFoot = new THREE.Mesh(footGeo, sharedMaterial);
+    const lFoot = new THREE.Mesh(HUMAN_GEOMETRY.foot, sharedMaterial);
     // Que el pie caiga desde el tobillo
     lFoot.position.set(0, -0.08 / 2, 0.12);
     lAnklePivot.add(lFoot);
@@ -612,7 +620,7 @@ export class ArtShooterGame {
     const rAnklePivot = new THREE.Object3D();
     rAnklePivot.position.set(0, -lowerLegLength, 0);
     rKneePivot.add(rAnklePivot);
-    const rFoot = new THREE.Mesh(footGeo, sharedMaterial);
+    const rFoot = new THREE.Mesh(HUMAN_GEOMETRY.foot, sharedMaterial);
     rFoot.position.set(0, -0.08 / 2, 0.12);
     rAnklePivot.add(rFoot);
 
@@ -1312,7 +1320,7 @@ export class ArtShooterGame {
               child.material.dispose?.();
             }
           }
-          if (child.geometry) child.geometry.dispose();
+          if (child.geometry && !HUMAN_GEOMETRY_SET.has(child.geometry)) child.geometry.dispose();
         }
       });
     } else {
@@ -1327,7 +1335,7 @@ export class ArtShooterGame {
           root.material.dispose?.();
         }
       }
-      if (root.geometry) root.geometry.dispose();
+      if (root.geometry && !HUMAN_GEOMETRY_SET.has(root.geometry)) root.geometry.dispose();
     }
     if (root.parent) root.parent.remove(root); else this.scene.remove(root);
     if (this.currentTarget === root) this.currentTarget = null;
@@ -2399,7 +2407,7 @@ export class ArtShooterGame {
 
     if (this.scene) {
       this.scene.traverse((obj) => {
-        if (obj.geometry) obj.geometry.dispose();
+        if (obj.geometry && !HUMAN_GEOMETRY_SET.has(obj.geometry)) obj.geometry.dispose();
         if (obj.material) {
           if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
           else obj.material.dispose();

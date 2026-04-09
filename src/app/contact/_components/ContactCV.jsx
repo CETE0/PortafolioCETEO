@@ -10,7 +10,7 @@ export default function ContactCV() {
   const items = CV_ITEMS[lang] ?? CV_ITEMS.en;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 md:relative">
       <button
         type="button"
         id="contact-cv-toggle"
@@ -30,7 +30,7 @@ export default function ContactCV() {
           id="contact-cv-panel"
           role="region"
           aria-labelledby="contact-cv-toggle"
-          className="space-y-4"
+          className="space-y-4 md:absolute md:top-full md:left-0 md:right-0 md:mt-4 md:max-h-[60vh] md:overflow-y-auto md:bg-white md:z-10"
         >
           {items.map((item, index) => (
             <div key={`${item.period}-${index}`} className="space-y-1">

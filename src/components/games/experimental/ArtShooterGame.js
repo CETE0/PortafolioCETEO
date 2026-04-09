@@ -2275,11 +2275,13 @@ export class ArtShooterGame {
         const baseY2 = anim.baseY || m.position.y;
         if (!anim.baseY) anim.baseY = baseY2;
 
-        // Respiración universal (sutil expansión del torso)
+        // Respiración universal (§7.9: ahora también eleva ligeramente el torso)
         const breathScale = 1 + Math.sin(anim.t2) * amplitudes.breath;
+        const breathScaleY = 1 + Math.sin(anim.t2) * amplitudes.breath * 0.4;
         if (torso) {
           torso.scale.x = breathScale;
           torso.scale.z = breathScale;
+          torso.scale.y = breathScaleY;
         }
 
         // Aplicar animación según el tipo

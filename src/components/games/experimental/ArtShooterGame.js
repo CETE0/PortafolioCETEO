@@ -5,8 +5,10 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { projects } from '@/lib/projects';
 import { 
+  ASCIIShader,
   CRTShader, 
   DitheringShader, 
+  defaultASCIIConfig,
   defaultCRTConfig, 
   defaultDitheringConfig,
   presets 
@@ -414,8 +416,11 @@ export class ArtShooterGame {
 
     // Post-processing
     this.composer = null;
+    this.asciiPass = null;
     this.crtPass = null;
     this.ditheringPass = null;
+    this.asciiGlyphTexture = null;
+    this.asciiConfig = { ...defaultASCIIConfig };
     this.crtConfig = { ...defaultCRTConfig };
     this.ditheringConfig = { ...defaultDitheringConfig };
     this.debugGui = null;
@@ -1513,6 +1518,9 @@ export class ArtShooterGame {
         this.container.clientWidth * this.renderer.getPixelRatio(),
         this.container.clientHeight * this.renderer.getPixelRatio()
       );
+      if (this.asciiPass) {
+        this.asciiPass.uniforms.resolution.value = resolution;
+      }
       if (this.crtPass) {
         this.crtPass.uniforms.resolution.value = resolution;
       }
@@ -1748,6 +1756,51 @@ export class ArtShooterGame {
   }
 
   // ============ POST-PROCESSING ============
+
+  getASCIICharset(name = this.asciiConfig.charset) {
+    const charsets = {
+      standard: ' .:-=+*#%@',
+      blocks: ' .:░▒▓█',
+      dots: ' .·:•',
+      binary: ' 01',
+    };
+    return charsets[name] || charsets.blocks;
+  }
+
+  getASCIIPaletteMode(name = this.asciiConfig.palette) {
+    const palettes = { mono: 0, ice: 1, source: 2 };
+    return palettes[name] ?? palettes.ice;
+  }
+
+  createASCIIGlyphTexture(charset = this.getASCIICharset()) {
+    const cell = 48;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = cell * charset.length;
+    canvas.height = cell;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = `700 ${Math.round(cell * 0.82)}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i < charset.length; i++) {
+      ctx.fillText(charset[i], i * cell + cell / 2, cell / 2 + 1);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.NoColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.generateMipmaps = false;
+    texture.needsUpdate = true;
+    texture.userData.charCount = charset.length;
+    return texture;
+  }
   
   initPostProcessing() {
     // Crear composer
@@ -1756,6 +1809,16 @@ export class ArtShooterGame {
     // Render pass (escena base)
     const renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(renderPass);
+
+    // ASCII pass (shader viewport prototype)
+    this.asciiGlyphTexture = this.createASCIIGlyphTexture();
+    this.asciiPass = new ShaderPass(ASCIIShader);
+    this.asciiPass.uniforms.resolution.value = new THREE.Vector2(
+      this.container.clientWidth * this.renderer.getPixelRatio(),
+      this.container.clientHeight * this.renderer.getPixelRatio()
+    );
+    this.asciiPass.enabled = this.asciiConfig.enabled;
+    this.composer.addPass(this.asciiPass);
     
     // CRT pass
     this.crtPass = new ShaderPass(CRTShader);
@@ -1776,8 +1839,38 @@ export class ArtShooterGame {
     this.composer.addPass(this.ditheringPass);
     
     // Aplicar configuración inicial
+    this.updateASCIIUniforms();
     this.updateCRTUniforms();
     this.updateDitheringUniforms();
+  }
+
+  updateASCIIUniforms() {
+    if (!this.asciiPass) return;
+    const u = this.asciiPass.uniforms;
+    const c = this.asciiConfig;
+
+    this.asciiPass.enabled = c.enabled;
+    u.enabled.value = c.enabled;
+    u.cellSize.value = c.cellSize;
+    u.intensity.value = c.intensity;
+    u.effectStrength.value = c.effectStrength;
+    u.shadowLift.value = c.shadowLift;
+    u.contrast.value = c.contrast;
+    u.brightness.value = c.brightness;
+    u.invert.value = c.invert;
+    u.scanlineStrength.value = c.scanlineStrength;
+    u.paletteMode.value = this.getASCIIPaletteMode(c.palette);
+
+    if (this.asciiGlyphTexture) {
+      u.glyphTexture.value = this.asciiGlyphTexture;
+      u.charCount.value = this.asciiGlyphTexture.userData.charCount || this.getASCIICharset().length;
+    }
+
+    u.backgroundColor.value = new THREE.Color(0x071321);
+    u.inkColor.value = new THREE.Color(0xbdf7ff);
+    u.iceDark.value = new THREE.Color(0x17304a);
+    u.iceMid.value = new THREE.Color(0x35bfff);
+    u.iceLight.value = new THREE.Color(0xf3fdff);
   }
   
   updateCRTUniforms() {
@@ -2519,8 +2612,12 @@ export class ArtShooterGame {
       }
     }
     // Actualizar uniforms de tiempo para efectos animados
+    const postTime = performance.now() / 1000;
+    if (this.asciiPass && this.asciiPass.uniforms.time) {
+      this.asciiPass.uniforms.time.value = postTime;
+    }
     if (this.crtPass && this.crtPass.uniforms.time) {
-      this.crtPass.uniforms.time.value = performance.now() / 1000;
+      this.crtPass.uniforms.time.value = postTime;
     }
     
     // Simple frame skip adaptativo en móvil si el delta sube mucho
@@ -2528,7 +2625,7 @@ export class ArtShooterGame {
       // salta este frame ocasionalmente para bajar carga
     } else {
       // Usar composer si está disponible, sino renderer normal
-      if (this.composer && (this.crtConfig.enabled || this.ditheringConfig.enabled)) {
+      if (this.composer && (this.asciiConfig.enabled || this.crtConfig.enabled || this.ditheringConfig.enabled)) {
         this.composer.render();
       } else {
         this.renderer.render(this.scene, this.camera);
@@ -2650,6 +2747,13 @@ export class ArtShooterGame {
     if (this.composer) {
       this.composer.dispose?.();
       this.composer = null;
+    }
+    if (this.asciiGlyphTexture) {
+      this.asciiGlyphTexture.dispose();
+      this.asciiGlyphTexture = null;
+    }
+    if (this.asciiPass) {
+      this.asciiPass = null;
     }
     if (this.crtPass) {
       this.crtPass = null;

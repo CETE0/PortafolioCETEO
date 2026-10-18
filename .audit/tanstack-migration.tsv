@@ -1,0 +1,14 @@
+ts	phase	decision	why	evidence	result
+2026-10-18T20:42:00Z	frame	compared the migration package to the repo before applying it	the package could be older than the repo	diff of lib, i18n, games: only import suffixes, 'use client', router swap differ; uncommitted ArtShooterGame change already in package	no drift
+2026-10-18T20:42:00Z	frame	target Cloudflare Workers directly, skip the Vercel preset in MIGRATION.md section 5	Cloudflare is the next step anyway, a Vercel adapter would be thrown away	tanstack.com/start hosting docs, Cloudflare section	decided
+2026-10-18T20:42:00Z	harness	wrote scripts/smoke-routes.mjs and ran it against the current Next app	need an old vs new comparison for every URL	.audit/baseline-next.tsv	26/28: unknown project gives 200, favicon gives 500
+2026-10-18T20:59:16Z	apply	removed Next files and copied the package in, public/ untouched	package matches the current tree	git status on branch tanstack	done
+2026-10-18T20:59:16Z	deps	moved to Vite 8 and deleted .npmrc	current TanStack Start needs Vite 8; legacy-peer-deps hid the mismatch	npm ls ELSPROBLEMS before, clean install after	clean install
+2026-10-18T20:59:16Z	deps	removed @react-three/*, @vimeo/player, lucide-react, vite-tsconfig-paths	no imports anywhere; Vite 8 resolves tsconfig paths itself	grep over src and scripts	build green
+2026-10-18T20:59:16Z	cloudflare	added @cloudflare/vite-plugin, wrangler.jsonc, deploy/preview scripts	Cloudflare is the target, so dev and preview should run in workerd	vite.config.ts, wrangler.jsonc	wrangler dry-run 395 KiB gzip
+2026-10-18T20:59:16Z	bug	renamed Médium.jpg to medium.jpg	macOS gives the build the NFD name, the URL is NFC; workerd 404d it	.audit/after-workerd.tsv	fixed, smoke now checks every asset
+2026-10-18T20:59:16Z	types	turned on strictNullChecks, deleted dead TextContentView and react-markdown	router types need it; no project has a text item	npx tsc --noEmit	tsc clean, wired into build
+2026-10-18T20:59:16Z	cloudflare	added public/_headers with immutable cache for /assets/* only	only hashed files are safe to cache forever	curl -I on preview	verified header
+2026-10-18T20:59:16Z	verify	ran smoke and headless browser checks on the workerd preview	status codes alone could hide blank pages	.audit/after-workerd.tsv, scratchpad screenshots	72/72, 11/11 browser checks
+2026-10-18T20:59:16Z	verify	first dev check hit other apps on ports 3000 and 3105	my check was looking at the wrong server	dev.log: port in use	smoke now aborts if the title is not this site
+2026-10-18T20:59:16Z	verify	game errors in dev also happen on old Next app	needed to know if the migration caused them	same check on a main worktree, same 3 failures	pre-existing, left open

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { KickableObject } from './KickableObject';
 import { Enemy } from './Enemy';
 import { GameUI } from './GameUI';

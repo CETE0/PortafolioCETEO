@@ -332,6 +332,131 @@ export const DitheringShader = {
   `
 };
 
+// Shader ASCII: convierte el render 3D en una cuadrícula de glyphs en GPU
+export const ASCIIShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    resolution: { value: null },
+    glyphTexture: { value: null },
+    time: { value: 0 },
+
+    enabled: { value: true },
+    cellSize: { value: 10.0 },
+    charCount: { value: 7.0 },
+    intensity: { value: 1.0 },
+    effectStrength: { value: 0.68 },
+    shadowLift: { value: 0.12 },
+    contrast: { value: 1.3 },
+    brightness: { value: 1.1 },
+    invert: { value: false },
+    paletteMode: { value: 1 }, // 0: ink, 1: ice, 2: source colour
+    scanlineStrength: { value: 0.08 },
+
+    backgroundColor: { value: null },
+    inkColor: { value: null },
+    iceDark: { value: null },
+    iceMid: { value: null },
+    iceLight: { value: null },
+  },
+
+  vertexShader: /* glsl */`
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse;
+    uniform sampler2D glyphTexture;
+    uniform vec2 resolution;
+    uniform float time;
+
+    uniform bool enabled;
+    uniform float cellSize;
+    uniform float charCount;
+    uniform float intensity;
+    uniform float effectStrength;
+    uniform float shadowLift;
+    uniform float contrast;
+    uniform float brightness;
+    uniform bool invert;
+    uniform int paletteMode;
+    uniform float scanlineStrength;
+
+    uniform vec3 backgroundColor;
+    uniform vec3 inkColor;
+    uniform vec3 iceDark;
+    uniform vec3 iceMid;
+    uniform vec3 iceLight;
+
+    varying vec2 vUv;
+
+    vec3 iceRamp(float v) {
+      v = clamp(v, 0.0, 1.0);
+      if (v < 0.55) {
+        return mix(iceDark, iceMid, smoothstep(0.0, 0.55, v));
+      }
+      return mix(iceMid, iceLight, smoothstep(0.55, 1.0, v));
+    }
+
+    void main() {
+      if (!enabled) {
+        gl_FragColor = texture2D(tDiffuse, vUv);
+        return;
+      }
+
+      float cs = max(cellSize, 2.0);
+      vec2 frag = gl_FragCoord.xy;
+      vec2 cell = floor(frag / cs);
+      vec2 local = fract(frag / cs);
+      vec2 sampleUv = clamp((cell + 0.5) * cs / resolution, 0.0, 1.0);
+      vec3 src = texture2D(tDiffuse, sampleUv).rgb;
+
+      float lum = dot(src, vec3(0.299, 0.587, 0.114));
+      lum = (lum - 0.5) * contrast + 0.5;
+      lum = clamp(lum * brightness, 0.0, 1.0);
+      lum = clamp(lum + shadowLift * (1.0 - lum), 0.0, 1.0);
+      if (invert) lum = 1.0 - lum;
+
+      float count = max(charCount, 2.0);
+      float glyphIndex = floor(lum * (count - 1.0) + 0.5);
+      vec2 glyphUv = vec2((glyphIndex + local.x) / count, 1.0 - local.y);
+      float glyphMask = texture2D(glyphTexture, glyphUv).r;
+
+      vec3 glyphColor = inkColor;
+      if (paletteMode == 1) {
+        glyphColor = iceRamp(lum);
+      } else if (paletteMode == 2) {
+        glyphColor = max(src, vec3(0.08));
+      }
+
+      float scan = 1.0 - scanlineStrength * (0.5 + 0.5 * sin((frag.y + time * 18.0) * 3.14159));
+      vec3 color = mix(backgroundColor, glyphColor * (0.55 + lum * 0.75), clamp(glyphMask * intensity, 0.0, 1.0));
+      color *= scan;
+      color = mix(src, color, clamp(effectStrength, 0.0, 1.0));
+
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `
+};
+
+// Configuración por defecto para producción
+export const defaultASCIIConfig = {
+  enabled: true,
+  charset: 'blocks',
+  palette: 'ice',
+  cellSize: 8,
+  intensity: 0.78,
+  effectStrength: 0.58,
+  shadowLift: 0.14,
+  contrast: 0.95,
+  brightness: 1.03,
+  invert: false,
+  scanlineStrength: 0.035,
+};
+
 // Configuración por defecto para producción
 export const defaultCRTConfig = {
   // Master

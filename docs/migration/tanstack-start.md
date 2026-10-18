@@ -117,4 +117,4 @@ Baseline on the old Next app was 26/28. Unknown projects returned 200 and `/favi
 - [ ] **Instagram / Linktree / CVs elsewhere**: update the handle and email outside the site too
 - [ ] **Games throw on mount in dev only** (`null.domElement` in the shooter, `null.frames` in the kick game). Same errors on the old Next app; StrictMode's double mount disposes the game before async setup finishes. Production is unaffected.
 - [ ] Manually check pointer lock, audio autoplay, and the shooter's `onNavigate` into project pages. Headless checks confirm the canvases render without errors but cannot drive pointer lock.
-- [ ] After the Cloudflare cutover, delete the Vercel project and its `NEXT_PUBLIC_*` env vars
+- [ ] Disconnect the Vercel GitHub integration (it still posts a failing `Vercel` check on PRs), then delete the Vercel project and its `NEXT_PUBLIC_*` env vars

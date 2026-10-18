@@ -98,6 +98,7 @@ Then attach the custom domain in the Cloudflare dashboard (Workers & Pages → t
 - `npm run smoke -- <base-url> [out.tsv]` checks every route, the 404 path, and every local asset referenced in `src/lib/projects.js`. It refuses to run if the URL is serving a different app.
 - `npm run test:anim` covers the shooter animation regressions.
 - `npx wrangler deploy --dry-run` builds the upload without publishing.
+- `.github/workflows/ci.yml` runs the build (with `tsc`), `test:anim`, and the smoke check against `vite preview` on every PR and push to `main`. It reads `VITE_CLOUDINARY_CLOUD_NAME` from the repository variable of that name.
 
 Baseline on the old Next app was 26/28. Unknown projects returned 200 and `/favicon.ico` returned 500 (duplicate in `public/` and `src/app/`). On the Worker it is 72/72 with the asset checks added.
 

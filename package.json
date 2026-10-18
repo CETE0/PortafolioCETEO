@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
+    "smoke": "node scripts/smoke-routes.mjs",
     "test:anim": "node scripts/tests/anim/run-all.mjs",
     "upload-images": "node scripts/upload-to-cloudinary.cjs"
   },

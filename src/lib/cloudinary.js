@@ -5,7 +5,7 @@
  * @returns {string} URL optimizada
  */
 export function getCloudinaryUrl(publicId, options = {}) {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your_cloud_name_here';
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'your_cloud_name_here';
   
   const {
     width,

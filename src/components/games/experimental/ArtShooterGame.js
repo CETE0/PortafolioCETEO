@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { projects } from '@/lib/projects';
 import { 
   ASCIIShader,
@@ -726,10 +726,19 @@ export class ArtShooterGame {
     );
     this.camera.rotation.order = 'YXZ';
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    const asciiEnabled = this.asciiConfig?.enabled;
+    this.renderer = new THREE.WebGLRenderer({
+      // The ASCII pass masks mesh aliasing, so MSAA mostly burns GPU without
+      // improving the final terminal/block look.
+      antialias: !asciiEnabled,
+      stencil: false,
+    });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     const quality = this.isTouchDevice ? GAME_CONFIG.quality.mobile : GAME_CONFIG.quality.desktop;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.maxDpr));
+    // ASCII is screen-cell based; capping DPR avoids doing 2-3x fragment work on
+    // Retina displays while preserving the saved prototype's visual character.
+    const maxDpr = asciiEnabled ? Math.min(quality.maxDpr, 1.0) : quality.maxDpr;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;

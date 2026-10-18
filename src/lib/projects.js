@@ -438,7 +438,7 @@ export const projects = {
       content: [
         {
           type: 'image',
-          src: '/images/Medium/Médium.jpg',
+          src: '/images/Medium/medium.jpg',
           alt: 'Médium',
           text: '(2025)'
         },

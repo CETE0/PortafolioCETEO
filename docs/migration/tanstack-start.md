@@ -84,14 +84,13 @@ The app builds straight to a Cloudflare Worker with static assets. There is no V
 - `npm run build` runs `vite build && tsc --noEmit`, so a type error fails the deploy.
 - The worker needs no secrets or bindings. `VITE_CLOUDINARY_CLOUD_NAME` is inlined at build time, so it must be present wherever the build runs (local `.env` or the Workers Builds environment).
 
-First deploy:
+Production is `mateo.red`, a custom domain declared in `wrangler.jsonc`. `www.mateo.red` and every `ceteo.cl` host 301 to it through zone redirect rules, keeping path and query.
+
+Every push to `main` deploys through `.github/workflows/deploy.yml`, which then smoke-tests `https://mateo.red`. It reads the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets and the `VITE_CLOUDINARY_CLOUD_NAME` variable. To deploy by hand:
 
 ```bash
-npx wrangler login
-npm run deploy            # build + wrangler deploy
+CLOUDFLARE_API_TOKEN=$(cat ~/.cf-ceteo-token) CLOUDFLARE_ACCOUNT_ID=cd020e9db28c0ba703cf6add284f3684 npm run deploy
 ```
-
-Then attach the custom domain in the Cloudflare dashboard (Workers & Pages → the worker → Settings → Domains & Routes) and move DNS off Vercel. URLs are unchanged, so no redirects are needed.
 
 ## 6 · Verification
 

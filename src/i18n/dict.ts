@@ -23,8 +23,9 @@ export const dict = {
       about: 'About',
       social: 'Social',
       cv: 'CV',
-      cvShow: 'Show {count} entries',
-      cvHide: 'Hide',
+      cvShow: 'Show {count} entries ↓',
+      cvHide: 'Hide ↑',
+      location: 'SANTIAGO, CL',
       present: 'present',
       aboutText:
         'Mateo Cereceda is a new media artist based in Santiago, Chile. Currently working at the intersection of digital art and experimental sculptural installation.',
@@ -58,8 +59,9 @@ export const dict = {
       about: 'Acerca de',
       social: 'Social',
       cv: 'CV',
-      cvShow: 'Ver {count} entradas',
-      cvHide: 'Ocultar',
+      cvShow: 'Ver {count} entradas ↓',
+      cvHide: 'Ocultar ↑',
+      location: 'SANTIAGO, CL',
       present: 'presente',
       aboutText:
         'Mateo Cereceda es un artista de nuevos medios radicado en Santiago, Chile. Actualmente trabaja en la intersección entre el arte digital y la instalación escultórica experimental.',

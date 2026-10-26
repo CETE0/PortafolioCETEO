@@ -38,6 +38,9 @@ export default function OptimizedImage({ src, alt = '', context = 'gallery', pri
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
+      ref={(img) => {
+        if (img?.complete && img.naturalWidth) setLoaded(true)
+      }}
       onLoad={() => setLoaded(true)}
       onError={() => setError(true)}
       onClick={onClick}

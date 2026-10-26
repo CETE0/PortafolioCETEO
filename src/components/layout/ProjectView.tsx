@@ -6,6 +6,7 @@ import YouTubePlayer from './YouTubePlayer'
 import SketchfabViewer from './SketchfabViewer'
 import ImageViewer from './ImageViewer'
 import Pager from './Pager'
+import GameFrame from './GameFrame'
 import { pad2, projectYear, stripYear } from './projectMeta'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { projectTranslations } from '@/i18n/projects'
@@ -70,7 +71,6 @@ export default function ProjectView({ content = [], title, category, projectId }
   const year = projectYear(items.map((i) => i.text))
   const caption = stripYear(current.text || items.find((i) => i.text)?.text || '')
   const counter = `${pad2(index + 1)} / ${pad2(items.length)}`
-  const isGame = current.type === 'game'
   const pager = {
     prevLabel: t('project.prev'),
     nextLabel: t('project.next'),
@@ -99,17 +99,21 @@ export default function ProjectView({ content = [], title, category, projectId }
         return <YouTubePlayer videoId={current.id} title={current.title} />
       case '3d':
         return <SketchfabViewer modelId={current.modelId} title={current.title} />
-      case 'game':
-        return (
-          <ClientOnly fallback={<GameLoading />}>
-            <Suspense fallback={<GameLoading />}>
-              <KickGame />
-            </Suspense>
-          </ClientOnly>
-        )
       default:
         return null
     }
+  }
+
+  if (current.type === 'game') {
+    return (
+      <GameFrame title={name} hint={t('games.kick.hint')}>
+        <ClientOnly fallback={<GameLoading />}>
+          <Suspense fallback={<GameLoading />}>
+            <KickGame />
+          </Suspense>
+        </ClientOnly>
+      </GameFrame>
+    )
   }
 
   return (
@@ -134,17 +138,13 @@ export default function ProjectView({ content = [], title, category, projectId }
         </AnimatePresence>
       </div>
 
-      {!isGame && (
-        <>
-          {caption && <p className="max-w-[70ch] px-4 py-3 text-[13px] text-pretty text-muted md:px-8">{caption}</p>}
-          <div className="md:hidden">
-            <Pager variant="minimal" label={name} meta={`${year ? `${year} · ` : ''}${index + 1}/${items.length}`} {...pager} />
-          </div>
-          <div className="hidden md:block">
-            <Pager variant="ruled" counter={counter} {...pager} />
-          </div>
-        </>
-      )}
+      {caption && <p className="max-w-[70ch] px-4 py-3 text-[13px] text-pretty text-muted md:px-8">{caption}</p>}
+      <div className="md:hidden">
+        <Pager variant="minimal" label={name} meta={`${year ? `${year} · ` : ''}${index + 1}/${items.length}`} {...pager} />
+      </div>
+      <div className="hidden md:block">
+        <Pager variant="ruled" counter={counter} {...pager} />
+      </div>
 
       <AnimatePresence>
         {viewerOpen && current.type === 'image' && (
@@ -165,5 +165,5 @@ export default function ProjectView({ content = [], title, category, projectId }
 
 function GameLoading() {
   const { t } = useLanguage()
-  return <div className="flex h-full w-full items-center justify-center text-ink">{t('project.loadingGame')}</div>
+  return <div className="absolute inset-0 flex items-center justify-center text-ink">{t('project.loadingGame')}</div>
 }

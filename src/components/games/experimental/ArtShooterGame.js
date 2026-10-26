@@ -211,6 +211,7 @@ export class ArtShooterGame {
 
     this.container = container;
     this.onNavigate = options.onNavigate || null; // Callback para navegación al destruir un modelo
+    this.onHud = options.onHud || null;
     this.isNavigating = false; // Flag para evitar navegaciones múltiples
     this.isDisposing = false; // §5.2: gate destroyTarget's onNavigate during teardown
     this.pendingNavigateTimeout = null; // setTimeout id de la redirección diferida
@@ -269,7 +270,6 @@ export class ArtShooterGame {
     this.mobileCrosshairEl = null;
     this.desktopCrosshairEl = null;
     this.desktopClickOverlayEl = null;
-    this.desktopEscHintEl = null;
     this.onWindowBlur = null;
     this.onWindowFocus = null;
     this.explosions = [];
@@ -425,6 +425,7 @@ export class ArtShooterGame {
     this.ditheringConfig = { ...defaultDitheringConfig };
     this.debugGui = null;
 
+    this.publishHud();
     this.init();
   }
 
@@ -744,6 +745,7 @@ export class ArtShooterGame {
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = quality.castShadows;
     this.container.appendChild(this.renderer.domElement);
+    this.renderer.domElement.style.display = 'block';
     this.renderer.domElement.style.outline = 'none';
     this.renderer.domElement.setAttribute('tabindex', '0');
     // Crear gestor de texturas con anisotropía según perfil
@@ -764,7 +766,7 @@ export class ArtShooterGame {
         this.ensureDesktopCrosshair();
         this.showDesktopCrosshair();
         this.hideDesktopClickOverlay();
-        this.showEscHintOverlay();
+        this.publishHud();
       });
       this.controls.addEventListener('unlock', () => {
         this.isActive = false;
@@ -774,7 +776,7 @@ export class ArtShooterGame {
         this.showCustomCursor();
         this.hideDesktopCrosshair();
         this.showDesktopClickOverlay();
-        this.hideEscHintOverlay();
+        this.publishHud();
       });
     } else {
       // Modo móvil: activo por defecto y mira centrada con overlay propio
@@ -852,7 +854,8 @@ export class ArtShooterGame {
       this.initDebugGUI();
     }
 
-    window.addEventListener('resize', this.onResize);
+    this.resizeObserver = new ResizeObserver(this.onResize);
+    this.resizeObserver.observe(this.container);
     // Blur/Focus: pausar y reanudar música
     this.onWindowBlur = () => {
       if (this.music && this.music.isPlaying) {
@@ -1606,7 +1609,6 @@ export class ArtShooterGame {
     crosshair.appendChild(horizontal);
     el.appendChild(crosshair);
 
-    this.container.style.position = 'relative';
     this.container.appendChild(el);
     this.mobileCrosshairEl = el;
   }
@@ -1670,7 +1672,6 @@ export class ArtShooterGame {
     crosshairInner.appendChild(v);
     crosshairInner.appendChild(h);
     el.appendChild(crosshairInner);
-    this.container.style.position = 'relative';
     this.container.appendChild(el);
     this.desktopCrosshairEl = el;
     this.desktopCrosshairInner = crosshairInner;
@@ -1716,38 +1717,15 @@ export class ArtShooterGame {
       el.style.justifyContent = 'center';
       el.style.background = 'rgba(255,255,255,0.0)';
       el.style.pointerEvents = 'none';
-    const crosshairInner = document.createElement('div');
-    crosshairInner.style.position = 'relative';
-    crosshairInner.style.width = '100%';
-    crosshairInner.style.height = '100%';
-    crosshairInner.style.transition = 'transform 0.4s ease-out';
       el.style.zIndex = '900';
       const text = document.createElement('div');
       text.textContent = 'CLICK';
-      text.style.fontFamily = 'monospace';
+      text.style.fontFamily = "'JetBrains Mono', monospace";
       text.style.fontSize = '14px';
-      text.style.color = '#ff0000';
-      text.style.textShadow = '0 0 4px rgba(0,0,0,0.5)';
+      text.style.color = 'oklch(57.7% 0.245 27.325)';
       el.appendChild(text);
-      this.container.style.position = 'relative';
       this.container.appendChild(el);
       this.desktopClickOverlayEl = el;
-    }
-    // Hint de ESC para salir de pointer lock
-    if (!this.desktopEscHintEl) {
-      const esc = document.createElement('div');
-      esc.style.position = 'absolute';
-      esc.style.left = '12px';
-      esc.style.bottom = '12px';
-      esc.style.background = 'rgba(0,0,0,0.4)';
-      esc.style.color = '#fff';
-      esc.style.fontFamily = 'monospace';
-      esc.style.fontSize = '12px';
-      esc.style.display = 'none';
-      esc.style.zIndex = '900';
-      esc.textContent = 'SALIR ESC';
-      this.container.appendChild(esc);
-      this.desktopEscHintEl = esc;
     }
   }
 
@@ -1757,11 +1735,10 @@ export class ArtShooterGame {
   hideDesktopClickOverlay() {
     if (this.desktopClickOverlayEl) this.desktopClickOverlayEl.style.display = 'none';
   }
-  showEscHintOverlay() {
-    if (this.desktopEscHintEl) this.desktopEscHintEl.style.display = 'block';
-  }
-  hideEscHintOverlay() {
-    if (this.desktopEscHintEl) this.desktopEscHintEl.style.display = 'none';
+
+  publishHud() {
+    const value = this.isTouchDevice ? 'games.shooter.touch' : this.controls?.isLocked ? 'games.shooter.escExit' : 'games.shooter.clickToPlay';
+    this.onHud?.([{ label: 'games.status', value, tone: this.controls?.isLocked ? 'red' : 'ink' }]);
   }
 
   // ============ POST-PROCESSING ============
@@ -2651,7 +2628,8 @@ export class ArtShooterGame {
       clearTimeout(this.pendingNavigateTimeout);
       this.pendingNavigateTimeout = null;
     }
-    window.removeEventListener('resize', this.onResize);
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
     if (!this.isTouchDevice && this.container) {
       this.container.removeEventListener('click', this.onDocumentClick);
     }
@@ -2737,9 +2715,6 @@ export class ArtShooterGame {
     }
     if (this.desktopClickOverlayEl && this.desktopClickOverlayEl.parentNode) {
       this.desktopClickOverlayEl.parentNode.removeChild(this.desktopClickOverlayEl);
-    }
-    if (this.desktopEscHintEl && this.desktopEscHintEl.parentNode) {
-      this.desktopEscHintEl.parentNode.removeChild(this.desktopEscHintEl);
     }
     if (this.visibilityHandler) {
       document.removeEventListener('visibilitychange', this.visibilityHandler);

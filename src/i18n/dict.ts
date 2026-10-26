@@ -31,6 +31,28 @@ export const dict = {
         'Mateo Cereceda is a new media artist based in Santiago, Chile. Currently working at the intersection of digital art and experimental sculptural installation.',
     },
     modal: { close: 'Close', prev: 'Previous image', next: 'Next image' },
+    games: {
+      score: 'SCORE',
+      high: 'HIGH',
+      status: 'STATUS',
+      gameOver: 'GAME OVER',
+      kick: {
+        hint: 'WASD / ARROWS MOVE · SPACE JUMP · MOUSE LOOK · R-CLICK KICK',
+        start: 'CLICK TO START',
+        playing: 'ESC PAUSE',
+      },
+      coinpush: {
+        title: 'empuja monedas',
+        hint: 'TYPE + ENTER · SPACE DROP · ARROWS / MOUSE ROTATE',
+      },
+      shooter: {
+        title: 'art shooter',
+        hint: 'CLICK PLAY · MOUSE AIM · CLICK SHOOT · ESC EXIT',
+        clickToPlay: 'CLICK TO PLAY',
+        escExit: 'ESC EXIT',
+        touch: 'DRAG TO LOOK · TAP TO SHOOT',
+      },
+    },
     experimental: {
       warning: 'These projects may affect browser performance or redirect you externally.',
     },
@@ -67,6 +89,28 @@ export const dict = {
         'Mateo Cereceda es un artista de nuevos medios radicado en Santiago, Chile. Actualmente trabaja en la intersección entre el arte digital y la instalación escultórica experimental.',
     },
     modal: { close: 'Cerrar', prev: 'Imagen anterior', next: 'Imagen siguiente' },
+    games: {
+      score: 'PUNTOS',
+      high: 'RÉCORD',
+      status: 'ESTADO',
+      gameOver: 'FIN DEL JUEGO',
+      kick: {
+        hint: 'WASD / FLECHAS MOVER · ESPACIO SALTAR · MOUSE MIRAR · CLICK DER. PATEAR',
+        start: 'CLICK PARA EMPEZAR',
+        playing: 'ESC PAUSA',
+      },
+      coinpush: {
+        title: 'empuja monedas',
+        hint: 'ESCRIBE + ENTER · ESPACIO SOLTAR · FLECHAS / MOUSE GIRAR',
+      },
+      shooter: {
+        title: 'art shooter',
+        hint: 'CLICK JUGAR · MOUSE APUNTAR · CLICK DISPARAR · ESC SALIR',
+        clickToPlay: 'CLICK PARA JUGAR',
+        escExit: 'ESC SALIR',
+        touch: 'ARRASTRA PARA MIRAR · TOCA PARA DISPARAR',
+      },
+    },
     experimental: {
       warning: 'Estos proyectos pueden afectar el rendimiento del navegador o redirigirte externamente.',
     },

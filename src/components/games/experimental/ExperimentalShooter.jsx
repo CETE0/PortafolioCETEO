@@ -1,41 +1,23 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArtShooterGame } from './ArtShooterGame';
+import { useGameHud } from '@/components/layout/GameFrame';
 
 export default function ExperimentalShooter() {
   const containerRef = useRef(null);
-  const gameRef = useRef(null);
   const navigate = useNavigate();
+  const setHud = useGameHud();
 
-  // Callback de navegación que se pasará al juego
   const handleNavigate = useCallback((path) => {
     navigate({ to: path });
   }, [navigate]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    
-    // Pasar el callback de navegación al juego
-    gameRef.current = new ArtShooterGame(containerRef.current, {
-      onNavigate: handleNavigate
-    });
-    
-    // Hacer que el contenedor capture clicks y no toda la página
+    const game = new ArtShooterGame(containerRef.current, { onNavigate: handleNavigate, onHud: setHud });
     containerRef.current.style.cursor = 'crosshair';
-    
-    return () => {
-      if (gameRef.current) gameRef.current.dispose();
-    };
-  }, [handleNavigate]);
+    return () => game.dispose();
+  }, [handleNavigate, setHud]);
 
-  return (
-    <div
-      id="game-container"
-      ref={containerRef}
-      className="w-full relative"
-      style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}
-    />
-  );
+  return <div id="game-container" ref={containerRef} className="absolute inset-0 overflow-hidden" />;
 }
-
-

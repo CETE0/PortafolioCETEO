@@ -1,31 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { ThreeGame } from './game/ThreeGame';
+import { useGameHud } from '@/components/layout/GameFrame';
 
 export default function KickGame() {
   const containerRef = useRef(null);
-  const gameRef = useRef(null);
+  const setHud = useGameHud();
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const game = new ThreeGame(containerRef.current, { onHud: setHud });
+    return () => game.dispose();
+  }, [setHud]);
 
-    // Initialize game
-    gameRef.current = new ThreeGame(containerRef.current);
-
-    return () => {
-      if (gameRef.current) {
-        gameRef.current.dispose();
-      }
-    };
-  }, []);
-
-  return (
-    <div 
-      ref={containerRef} 
-      className="w-full relative"
-      style={{ 
-        height: 'calc(100vh - 64px)', // Altura ajustada para evitar el doble render
-        overflow: 'hidden' // Prevenir scroll
-      }}
-    />
-  );
+  return <div ref={containerRef} className="absolute inset-0 overflow-hidden" />;
 }

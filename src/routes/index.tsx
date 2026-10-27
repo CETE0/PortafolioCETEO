@@ -1,5 +1,7 @@
 import { createFileRoute, ClientOnly } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
+import { useLanguage } from '@/i18n/LanguageContext'
+import GameFrame from '@/components/layout/GameFrame'
 
 const ExperimentalShooter = lazy(() => import('@/components/games/experimental/ExperimentalShooter'))
 
@@ -8,13 +10,14 @@ export const Route = createFileRoute('/')({
 })
 
 function Home() {
+  const { t } = useLanguage()
   return (
-    <div className="h-full w-full">
+    <GameFrame hint={t('games.shooter.hint')}>
       <ClientOnly>
         <Suspense fallback={null}>
           <ExperimentalShooter />
         </Suspense>
       </ClientOnly>
-    </div>
+    </GameFrame>
   )
 }

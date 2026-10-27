@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { DitheringShader } from './PostProcessingShaders';
+import { useGameHud } from '@/components/layout/GameFrame';
 
 // Configuración
 const CUBE_SIZE = 2.5;
@@ -61,6 +62,11 @@ export default function CoinPushTerminal() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [audioStarted, setAudioStarted] = useState(false);
   const inputRef = useRef(null);
+  const setHud = useGameHud();
+
+  useEffect(() => {
+    setHud([{ label: 'games.score', value: score.toString().padStart(6, '0') }]);
+  }, [score, setHud]);
 
   // Inicializar audio
   useEffect(() => {
@@ -303,6 +309,8 @@ export default function CoinPushTerminal() {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.inset = '0';
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -369,7 +377,8 @@ export default function CoinPushTerminal() {
         );
       }
     };
-    window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(containerRef.current);
 
     const animate = () => {
       animationRef.current = requestAnimationFrame(animate);
@@ -414,15 +423,13 @@ export default function CoinPushTerminal() {
     animate();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
       composer.dispose();
       renderer.dispose();
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
+      renderer.domElement.remove();
     };
   }, []);
 
@@ -600,32 +607,17 @@ export default function CoinPushTerminal() {
   }, [startAudio]);
 
   return (
-    <div 
-      className="w-full h-full bg-black relative overflow-hidden flex flex-col"
-      style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-    >
-      {/* Three.js container */}
-      <div 
-        ref={containerRef} 
-        className="flex-1 cursor-crosshair"
-        onClick={handleContainerClick}
-      />
-      
-      {/* Score */}
-      <div className="absolute top-4 right-4 text-green-500 text-sm">
-        {score.toString().padStart(6, '0')}
-      </div>
-      
-      {/* Input terminal style */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-green-900">
-        <div className="flex items-center max-w-xl mx-auto">
-          <span className="text-green-500 mr-2">{'>'}</span>
+    <div className="absolute inset-0 flex flex-col overflow-hidden bg-black font-mono">
+      <div ref={containerRef} className="relative min-h-0 flex-1 cursor-crosshair" onClick={handleContainerClick} />
+      <form onSubmit={handleSubmit} className="flex h-12 flex-none items-center border-t border-[#333] px-4">
+        <div className="mx-auto flex w-full max-w-xl items-center">
+          <span className="mr-2 text-[13px] text-red-600">{'>'}</span>
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-green-400 text-sm caret-green-500"
+            className="flex-1 bg-transparent text-[13px] text-white caret-red-600 outline-none"
             autoComplete="off"
             spellCheck="false"
             autoFocus

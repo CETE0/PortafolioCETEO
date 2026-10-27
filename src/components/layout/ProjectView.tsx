@@ -4,16 +4,20 @@ import { AnimatePresence, motion } from 'framer-motion'
 import OptimizedImage from './OptimizedImage'
 import YouTubePlayer from './YouTubePlayer'
 import SketchfabViewer from './SketchfabViewer'
-import ImageViewerModal from './ImageViewerModal'
+import ImageViewer from './ImageViewer'
+import Pager from './Pager'
+import GameFrame from './GameFrame'
+import { pad2, projectYear, stripYear } from './projectMeta'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { projectTranslations } from '@/i18n/projects'
+import { projectLabel } from '@/data/navigation'
 
 const KickGame = lazy(() => import('../games/KickGame'))
 
-type Item = { type: 'image' | 'youtube' | '3d' | 'game'; [k: string]: any }
+type Item = { type: 'image' | 'youtube' | '3d' | 'game'; text?: string; [k: string]: any }
 type Props = { content?: Item[]; title?: string; category: string; projectId: string }
 
-export default function ProjectView({ content = [], category, projectId }: Props) {
+export default function ProjectView({ content = [], title, category, projectId }: Props) {
   const { t, lang } = useLanguage()
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -60,16 +64,27 @@ export default function ProjectView({ content = [], category, projectId }: Props
   }, [current, go])
 
   if (!current) {
-    return <div className="flex h-full items-center justify-center text-black">{t('project.noContent')}</div>
+    return <div className="flex h-full items-center justify-center text-ink">{t('project.noContent')}</div>
   }
 
-  const caption = current.text || items.find((i) => i.text)?.text || ''
+  const name = title ?? projectLabel(projectId)
+  const year = projectYear(items.map((i) => i.text))
+  const caption = stripYear(current.text || items.find((i) => i.text)?.text || '')
+  const counter = `${pad2(index + 1)} / ${pad2(items.length)}`
+  const pager = {
+    prevLabel: t('project.prev'),
+    nextLabel: t('project.next'),
+    hasPrev,
+    hasNext,
+    onPrev: () => go(-1),
+    onNext: () => go(1),
+  }
 
   const renderContent = () => {
     switch (current.type) {
       case 'image':
         return (
-          <div className="flex h-full w-full items-center justify-center bg-white p-4">
+          <div className="flex h-full w-full items-center justify-center p-3 md:p-6">
             <OptimizedImage
               key={current.src}
               src={current.src}
@@ -77,7 +92,6 @@ export default function ProjectView({ content = [], category, projectId }: Props
               context="gallery"
               priority={index === 0}
               onClick={() => setViewerOpen(true)}
-              className="max-h-[calc(100vh-200px)]"
             />
           </div>
         )
@@ -85,24 +99,31 @@ export default function ProjectView({ content = [], category, projectId }: Props
         return <YouTubePlayer videoId={current.id} title={current.title} />
       case '3d':
         return <SketchfabViewer modelId={current.modelId} title={current.title} />
-      case 'game':
-        return (
-          <ClientOnly fallback={<GameLoading />}>
-            <Suspense fallback={<GameLoading />}>
-              <KickGame />
-            </Suspense>
-          </ClientOnly>
-        )
       default:
         return null
     }
   }
 
-  const hidden = { visibility: viewerOpen ? 'hidden' : 'visible' } as const
+  if (current.type === 'game') {
+    return (
+      <GameFrame title={name} hint={t('games.kick.hint')}>
+        <ClientOnly fallback={<GameLoading />}>
+          <Suspense fallback={<GameLoading />}>
+            <KickGame />
+          </Suspense>
+        </ClientOnly>
+      </GameFrame>
+    )
+  }
 
   return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="relative flex-1 overflow-hidden">
+    <div className="flex h-full flex-col bg-white text-ink">
+      <header className="hidden h-[72px] flex-none items-center justify-between border-b border-ink px-8 md:flex">
+        <h1 className="text-sm font-medium">{name}</h1>
+        {year && <span className="font-mono text-[11px] text-muted">({year})</span>}
+      </header>
+
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={index}
@@ -111,43 +132,30 @@ export default function ProjectView({ content = [], category, projectId }: Props
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -direction * 50 }}
             transition={{ duration: 0.3 }}
-            style={hidden}
           >
             {renderContent()}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {current.type !== 'game' && (
-        <div className="bg-white" style={hidden}>
-          <div className="flex items-center justify-between px-4 py-4 md:px-8">
-            <button type="button" onClick={() => go(-1)} disabled={!hasPrev} className="text-sm text-black transition-colors hover:text-red-500 disabled:opacity-50 disabled:hover:text-black">
-              {t('project.prev')}
-            </button>
-            <span className="text-sm text-black" aria-live="polite">
-              {index + 1} / {items.length}
-            </span>
-            <button type="button" onClick={() => go(1)} disabled={!hasNext} className="text-sm text-black transition-colors hover:text-red-500 disabled:opacity-50 disabled:hover:text-black">
-              {t('project.next')}
-            </button>
-          </div>
-          <div className="px-4 py-4 md:px-8">
-            <p className="text-sm font-light text-black">{caption}</p>
-          </div>
-        </div>
-      )}
+      {caption && <p className="max-w-[70ch] px-4 py-3 text-[13px] text-pretty text-muted md:px-8">{caption}</p>}
+      <div className="md:hidden">
+        <Pager variant="minimal" label={name} meta={`${year ? `${year} · ` : ''}${index + 1}/${items.length}`} {...pager} />
+      </div>
+      <div className="hidden md:block">
+        <Pager variant="ruled" counter={counter} {...pager} />
+      </div>
 
       <AnimatePresence>
         {viewerOpen && current.type === 'image' && (
-          <ImageViewerModal
-            image={current as any}
-            onClose={() => setViewerOpen(false)}
-            onPrev={() => go(-1)}
-            onNext={() => go(1)}
+          <ImageViewer
+            image={{ src: current.src, alt: current.alt }}
+            counter={counter}
             hasPrev={hasPrev}
             hasNext={hasNext}
-            currentIndex={index + 1}
-            totalItems={items.length}
+            onPrev={() => go(-1)}
+            onNext={() => go(1)}
+            onClose={() => setViewerOpen(false)}
           />
         )}
       </AnimatePresence>
@@ -157,5 +165,5 @@ export default function ProjectView({ content = [], category, projectId }: Props
 
 function GameLoading() {
   const { t } = useLanguage()
-  return <div className="flex h-full w-full items-center justify-center text-black">{t('project.loadingGame')}</div>
+  return <div className="absolute inset-0 flex items-center justify-center text-ink">{t('project.loadingGame')}</div>
 }

@@ -85,26 +85,28 @@ class AudioManager {
 }
 
 export class ThreeGame {
-  constructor(container) {
+  constructor(container, { onHud } = {}) {
     if (!container) {
       console.error('No container provided for ThreeGame');
       return;
     }
     
     this.container = container;
+    this.onHud = onHud;
     this.playerBoundingBox = new THREE.Box3();
     this.wallBoundingBoxes = [];
     this.kickableObjects = [];
     this.enemies = [];
     this.audioManager = new AudioManager();
     this.gameOver = false;
-    this.ui = new GameUI();
+    this.ui = new GameUI(container);
     this.hasMovedFirstTime = false;
     this.isActive = false;
     
     // Sistema de puntuación
     this.score = 0;
     this.highScore = parseInt(localStorage.getItem('kickGameHighScore') || '0');
+    this.publishHud();
     
     this.kickAnimation = {
       isPlaying: false,
@@ -148,7 +150,9 @@ export class ThreeGame {
       this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
       this.renderer = new THREE.WebGLRenderer({ antialias: true });
       this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-      this.container.appendChild(this.renderer.domElement);
+      this.canvas = this.renderer.domElement;
+      this.canvas.style.display = 'block';
+      this.container.appendChild(this.canvas);
   
       await this.loadTextures();
   
@@ -160,11 +164,13 @@ export class ThreeGame {
         if (!this.gameOver) {
           this.audioManager.play('background');
         }
+        this.publishHud();
       });
   
       this.controls.addEventListener('unlock', () => {
         this.isActive = false;
         this.audioManager.stopAll();
+        this.publishHud();
       });
   
       // Iluminación central más intensa
@@ -206,9 +212,8 @@ export class ThreeGame {
       // Spawn inicial de enemigos
       this.spawnEnemies();
   
-      // Manejar resize de ventana
-      const handleResize = () => this.onWindowResize();
-      window.addEventListener('resize', handleResize);
+      this.resizeObserver = new ResizeObserver(() => this.onResize());
+      this.resizeObserver.observe(this.container);
       
       // Iniciar loop de animación
       this.animate();
@@ -308,7 +313,18 @@ export class ThreeGame {
         this.highScore = this.score;
         localStorage.setItem('kickGameHighScore', this.score.toString());
       }
-      this.ui.updateScore(this.score, this.highScore);
+      this.publishHud();
+    }
+
+    publishHud() {
+      const status = this.gameOver
+        ? { label: 'games.status', value: 'games.gameOver', tone: 'red' }
+        : { label: 'games.status', value: this.isActive ? 'games.kick.playing' : 'games.kick.start' };
+      this.onHud?.([
+        { label: 'games.score', value: String(this.score) },
+        { label: 'games.high', value: String(this.highScore) },
+        status,
+      ]);
     }
   
     setupControls() {
@@ -540,7 +556,7 @@ export class ThreeGame {
       this.gameOver = false;
       this.score = 0;
       this.ui.hideGameOver();
-      this.ui.updateScore(this.score, this.highScore);
+      this.publishHud();
       this.audioManager.stop('gameOver');
       if (this.isActive) {
         this.audioManager.play('background');
@@ -556,9 +572,10 @@ export class ThreeGame {
       this.audioManager.play('gameOver');
       this.controls.unlock();
       this.ui.showGameOver(this.score, this.highScore);
+      this.publishHud();
     }
   
-    onWindowResize() {
+    onResize() {
       if (this.camera && this.renderer && this.container) {
         this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera.updateProjectionMatrix();
@@ -727,10 +744,8 @@ export class ThreeGame {
         this.renderer = null;
       }
       
-      // Remove DOM element
-      if (this.container && this.container.firstChild) {
-        this.container.removeChild(this.container.firstChild);
-      }
+      this.canvas?.remove();
+      this.canvas = null;
       
       // Cleanup scene
       if (this.scene) {
@@ -753,8 +768,8 @@ export class ThreeGame {
       // Cleanup camera
       this.camera = null;
       
-      // Remove window resize listener
-      window.removeEventListener('resize', this.onWindowResize);
+      this.resizeObserver?.disconnect();
+      this.resizeObserver = null;
       
       // Cleanup UI
       if (this.ui) {

@@ -1,19 +1,25 @@
 import { Link } from '@tanstack/react-router'
-import LanguageSwitcher from './LanguageSwitcher'
 import { SITE } from '@/data/site'
 
-/** DM Sans Black, all caps, tracked. Language toggle sits beside it. */
-export default function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
+type Props = {
+  orientation?: 'horizontal' | 'vertical'
+  size?: number
+  className?: string
+  onNavigate?: () => void
+}
+
+export default function Wordmark({ orientation = 'horizontal', size = 24, className = 'text-red-600', onNavigate }: Props) {
+  const vertical = orientation === 'vertical'
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Link
-        to="/"
-        onClick={onNavigate}
-        className="text-base leading-7 font-black tracking-[0.05em] whitespace-nowrap text-red-600 uppercase [font-variation-settings:'opsz'_40]"
-      >
-        {SITE.name}
-      </Link>
-      <LanguageSwitcher className="shrink-0" />
-    </div>
+    <Link
+      to="/"
+      onClick={onNavigate}
+      style={{ fontSize: size }}
+      className={`block font-display leading-none font-black tracking-[0.03em] whitespace-nowrap uppercase ${
+        vertical ? 'rotate-180 [writing-mode:vertical-rl]' : ''
+      } ${className}`}
+    >
+      {SITE.name}
+    </Link>
   )
 }

@@ -3,8 +3,8 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-r
 import { useEffect, useState, type ReactNode } from 'react'
 import appCss from '../styles.css?url'
 import { LanguageProvider } from '@/i18n/LanguageContext'
-import Sidebar from '@/components/layout/Sidebar'
-import MobileHeader from '@/components/layout/MobileHeader'
+import DesktopSidebar from '@/components/layout/DesktopSidebar'
+import MobileNav from '@/components/layout/MobileNav'
 import CustomCursor from '@/components/layout/CustomCursor'
 import { SITE } from '@/data/site'
 
@@ -34,7 +34,7 @@ export const Route = createRootRoute({
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..1000&family=JetBrains+Mono:wght@400;700&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Big+Shoulders+Display:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap',
       },
     ],
   }),
@@ -48,7 +48,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-white font-sans text-black antialiased">
+      <body className="bg-white font-sans text-ink antialiased">
         {children}
         <Scripts />
       </body>
@@ -69,23 +69,13 @@ function RootLayout() {
     <LanguageProvider>
       <CustomCursor />
       <div className="flex h-screen min-h-screen bg-white">
-        <div className="hidden h-full w-64 md:flex">
-          <Sidebar />
+        <div className="hidden h-full w-64 flex-none md:flex">
+          <DesktopSidebar />
         </div>
 
-        <MobileHeader open={menuOpen} onToggle={() => setMenuOpen((o) => !o)} onNavigate={closeMenu} />
+        <MobileNav open={menuOpen} onToggle={() => setMenuOpen((o) => !o)} onNavigate={closeMenu} />
 
-        <div
-          id="mobile-sidebar"
-          aria-hidden={!menuOpen}
-          className={`fixed inset-y-0 right-0 z-[10001] flex h-full w-full flex-col justify-center bg-white transition-transform duration-300 ease-in-out md:hidden ${
-            menuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <Sidebar variant="mobile" onNavigate={closeMenu} />
-        </div>
-
-        <main className="h-full min-h-screen min-w-0 flex-1 bg-white pt-16 md:pt-0">
+        <main className="h-full min-h-screen min-w-0 flex-1 bg-white pt-12 md:pt-0">
           <Outlet />
         </main>
       </div>

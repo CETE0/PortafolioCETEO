@@ -46,7 +46,6 @@ export const dict = {
         hint: 'TYPE + ENTER · SPACE DROP · ARROWS / MOUSE ROTATE',
       },
       shooter: {
-        title: 'art shooter',
         hint: 'CLICK PLAY · MOUSE AIM · CLICK SHOOT · ESC EXIT',
         clickToPlay: 'CLICK TO PLAY',
         escExit: 'ESC EXIT',
@@ -104,7 +103,6 @@ export const dict = {
         hint: 'ESCRIBE + ENTER · ESPACIO SOLTAR · FLECHAS / MOUSE GIRAR',
       },
       shooter: {
-        title: 'art shooter',
         hint: 'CLICK JUGAR · MOUSE APUNTAR · CLICK DISPARAR · ESC SALIR',
         clickToPlay: 'CLICK PARA JUGAR',
         escExit: 'ESC SALIR',

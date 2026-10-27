@@ -14,7 +14,7 @@ export const Route = createFileRoute('/experimental/')({
 function Experimental() {
   const { t } = useLanguage()
   return (
-    <GameFrame title={t('games.shooter.title')} hint={t('games.shooter.hint')}>
+    <GameFrame hint={t('games.shooter.hint')}>
       <ClientOnly>
         <Suspense fallback={null}>
           <ExperimentalShooter />

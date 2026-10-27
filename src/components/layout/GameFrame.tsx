@@ -9,9 +9,12 @@ const HudContext = createContext<SetHud>(() => {})
 
 export const useGameHud = () => useContext(HudContext)
 
+/** The status cell's value already reads as a sentence, so the compact mobile bar drops its label. */
+const STATUS = 'games.status'
+
 const COLS = ['grid-cols-1', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3']
 
-type Props = { title: string; hint: string; children: ReactNode }
+type Props = { title?: string; hint: string; children: ReactNode }
 
 export default function GameFrame({ title, hint, children }: Props) {
   const { t } = useLanguage()
@@ -22,8 +25,8 @@ export default function GameFrame({ title, hint, children }: Props) {
   return (
     <div className="flex h-full flex-col bg-white text-ink">
       <header className="hidden h-[72px] flex-none items-center justify-between gap-6 border-b border-ink px-8 md:flex">
-        <h1 className="truncate text-sm font-medium">{title}</h1>
-        <span className="truncate font-mono text-[11px] text-muted">{hint}</span>
+        {title && <h1 className="truncate text-sm font-medium">{title}</h1>}
+        <span className="ml-auto truncate font-mono text-[11px] text-muted">{hint}</span>
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -41,11 +44,12 @@ export default function GameFrame({ title, hint, children }: Props) {
 
       <div className="flex h-12 flex-none items-center px-4 md:hidden">
         <div className="flex min-w-0 flex-1 items-baseline justify-between gap-4">
-          <span className="shrink-0 text-[13px] font-medium">{title}</span>
-          <span className="truncate font-mono text-[11px] text-muted">
+          {title && <span className="shrink-0 text-[13px] font-medium">{title}</span>}
+          <span className="ml-auto truncate font-mono text-[11px] text-muted">
             {shown.map((c, i) => (
               <span key={c.label}>
                 {i > 0 && ' · '}
+                {c.value && c.label !== STATUS && `${t(c.label)} `}
                 <span className={c.tone === 'red' ? 'text-red-600' : ''}>{t(c.value ?? c.label)}</span>
               </span>
             ))}

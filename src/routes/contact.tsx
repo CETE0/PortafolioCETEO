@@ -28,7 +28,7 @@ function ContactPage() {
       </header>
 
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
-        <div className="flex flex-col px-4 pt-4 md:grid md:grid-cols-[minmax(0,1fr)_300px] md:gap-x-12 md:gap-y-10 md:px-8 md:py-10">
+        <div className="flex flex-col px-4 pt-4 md:grid md:grid-cols-[minmax(0,1fr)_186px] md:gap-x-12 md:gap-y-10 md:px-8 md:py-10">
           <div className="order-1 md:order-none md:col-start-1 md:row-start-1">
             <ContactInfo cvOpen={cvOpen} onToggleCv={() => setCvOpen((o) => !o)} />
           </div>

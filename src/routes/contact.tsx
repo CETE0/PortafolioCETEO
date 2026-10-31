@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { pageTitle, SITE } from '@/data/site'
 import ContactInfo from '@/components/contact/ContactInfo'
@@ -17,11 +17,7 @@ export const Route = createFileRoute('/contact')({
 
 function ContactPage() {
   const { t } = useLanguage()
-  const [cvOpen, setCvOpen] = useState(false)
-
-  useEffect(() => {
-    if (window.location.hash === '#cv') setCvOpen(true)
-  }, [])
+  const [cvOpen, setCvOpen] = useState(true)
 
   return (
     <div className="h-full overflow-y-auto bg-white text-ink md:flex md:flex-col md:overflow-hidden">

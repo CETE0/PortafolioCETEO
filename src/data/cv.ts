@@ -7,7 +7,7 @@ const TOMA: L = { en: 'Production & Curation', es: 'Producción y Curaduría' }
 
 /** `{present}` is replaced with the localized word for "present". */
 export const CV_ITEMS: CvItem[] = [
-  { period: '2021 – {present}', title: { en: 'Telematics Civil Engineering', es: 'Ingeniería Civil Telemática' }, institution: same('Universidad Técnica Federico Santa María') },
+  { period: '2021', title: { en: 'Telematics Civil Engineering (first year)', es: 'Ingeniería Civil Telemática (primer año)' }, institution: same('Universidad Técnica Federico Santa María') },
   { period: '2022 – 2025', title: { en: 'Bachelor of Arts', es: 'Licenciatura en Artes' }, institution: PUC },
   { period: '2022', title: { en: 'Full Stack Web Development Bootcamp', es: 'Bootcamp de Desarrollo Web Full Stack' }, institution: same('Universidad del Desarrollo') },
   { period: '2024', title: { en: 'TOMA#1 Exhibition', es: 'Exposición TOMA#1' }, institution: TOMA },

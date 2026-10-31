@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { SITE } from '@/data/site'
-import { CV_ITEMS } from '@/data/cv'
 
 const row = 'flex flex-col gap-1 border-t border-rule py-3.5 md:grid md:grid-cols-[96px_minmax(0,1fr)] md:gap-4 md:py-4'
 const label = 'font-mono text-[11px] leading-4 tracking-[0.06em] text-muted uppercase md:leading-[22px]'
@@ -47,7 +46,7 @@ export default function ContactInfo({ cvOpen, onToggleCv }: Props) {
             onClick={onToggleCv}
             className={`min-h-11 text-[15px] leading-[22px] md:min-h-0 ${link} ${cvOpen ? 'text-red-600' : 'text-ink'}`}
           >
-            {cvOpen ? t('contact.cvHide') : t('contact.cvShow', { count: CV_ITEMS.length })}
+            {cvOpen ? t('contact.cvHide') : t('contact.cvShow')}
           </button>
         </dd>
       </div>

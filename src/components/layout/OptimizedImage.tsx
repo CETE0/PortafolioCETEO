@@ -21,7 +21,8 @@ export default function OptimizedImage({ src, alt = '', context = 'gallery', pri
   const url = getOptimizedImageUrl(src, opts)
   const srcSet = imageMap[src]
     ? WIDTHS.filter((w) => w <= opts.width)
-        .map((w) => `${getOptimizedImageUrl(src, { ...opts, width: w, height: Math.round((w * opts.height) / opts.width) })} ${w}w`)
+        // Width-only: a height cap would shrink portrait images below the `w` descriptor, and the browser renders them that much smaller.
+        .map((w) => `${getOptimizedImageUrl(src, { ...opts, width: w, height: undefined })} ${w}w`)
         .join(', ')
     : undefined
 

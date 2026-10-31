@@ -9,7 +9,6 @@ export default function EquilibrioLanding() {
   const { t } = useLanguage();
   const game = useLandingControls();
   const colors = getStageColors(defaultPalette, "dither");
-  const tiltActive = game.tilt !== "off";
   const focusStage = () => game.stage.current?.focus({ preventScroll: true });
 
   return (
@@ -64,14 +63,11 @@ export default function EquilibrioLanding() {
       </div>
 
       <footer className="relative flex-none px-4 pt-2 pb-4 md:px-8 md:pb-6">
-        <div
-          id="equilibrio-instructions"
-          className="space-y-1 font-mono text-[10px] leading-relaxed opacity-70"
-        >
-          <p className="hidden md:block">{t("games.equilibrio.keyboard")}</p>
-          <p className="md:hidden">{t("games.equilibrio.touch")}</p>
+        <div id="equilibrio-instructions" className="sr-only">
+          <p>{t("games.equilibrio.keyboard")}</p>
+          <p>{t("games.equilibrio.touch")}</p>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-0 md:-ml-3">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-0 md:-ml-3">
           <button
             type="button"
             className={button}
@@ -107,26 +103,7 @@ export default function EquilibrioLanding() {
           >
             {t("games.equilibrio.recenter")}
           </button>
-          <button
-            type="button"
-            className={button}
-            disabled={!game.ready}
-            aria-pressed={tiltActive}
-            onClick={game.toggleTilt}
-          >
-            {t(`games.equilibrio.${tiltActive ? "disableTilt" : "enableTilt"}`)}
-          </button>
         </div>
-        <p
-          role="status"
-          className="font-mono text-[10px] leading-relaxed opacity-70 empty:hidden"
-        >
-          {game.notice
-            ? t(`games.equilibrio.${game.notice}`)
-            : game.tilt === "calibrating" || game.tilt === "requesting"
-              ? t("games.equilibrio.calibrating")
-              : ""}
-        </p>
       </footer>
       <output id="equilibrio-landing-diagnostics" hidden>
         {JSON.stringify({

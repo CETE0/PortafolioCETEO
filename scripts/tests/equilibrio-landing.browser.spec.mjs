@@ -217,7 +217,7 @@ test("mobile controls fit, menu pauses correctly, and resizing out of an open me
     ),
   ).toBe(true);
   const footer = await page
-    .getByRole("button", { name: "Tilt", exact: true })
+    .getByRole("button", { name: "Reset", exact: true })
     .boundingBox();
   expect(footer.y + footer.height).toBeLessThanOrEqual(844);
   await page.screenshot({ path: testInfo.outputPath("landing-mobile.png") });
@@ -281,95 +281,6 @@ test("reduced motion is opt-in, keyboard input stays scoped, and navigation clea
   await expect(page.locator("canvas")).toHaveCount(1);
 });
 
-test("motion denial/no readings fall back; synthetic tilt calibrates and drives the camera-relative controls", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await ready(page);
-  await page.evaluate(() =>
-    Object.defineProperty(DeviceOrientationEvent, "requestPermission", {
-      configurable: true,
-      value: async () => "denied",
-    }),
-  );
-  await page.getByRole("button", { name: "Tilt", exact: true }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Tilt denied" }),
-  ).toBeVisible();
-  await page.evaluate(() =>
-    Object.defineProperty(DeviceOrientationEvent, "requestPermission", {
-      configurable: true,
-      value: async () => "granted",
-    }),
-  );
-  await page.getByRole("button", { name: "Tilt", exact: true }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "No tilt readings" }),
-  ).toBeVisible({ timeout: 6000 });
-  await page.getByRole("button", { name: "Tilt", exact: true }).click();
-  await page.evaluate(() =>
-    window.dispatchEvent(
-      new DeviceOrientationEvent("deviceorientation", { beta: 30, gamma: 0 }),
-    ),
-  );
-  await expect.poll(async () => (await state(page)).tilt).toBe("on");
-  for (let i = 0; i < 12; i++) {
-    await page.evaluate(() =>
-      window.dispatchEvent(
-        new DeviceOrientationEvent("deviceorientation", {
-          beta: 30,
-          gamma: 8,
-        }),
-      ),
-    );
-    await page.waitForTimeout(30);
-  }
-  await expect
-    .poll(async () => (await state(page)).stats.x)
-    .toBeGreaterThan(0.2);
-  await expect
-    .poll(async () => (await state(page)).stats.inputX)
-    .toBeGreaterThan(0.2);
-  expect((await state(page)).stats.grounded).toBe(true);
-  await stage(page).click();
-  await expect.poll(async () => (await state(page)).stats.grounded).toBe(false);
-  expect((await state(page)).stats.inputX).toBeGreaterThan(0.2);
-  await page.getByRole("button", { name: "Tilt off", exact: true }).click();
-  expect((await state(page)).tilt).toBe("off");
-});
-
-test("late permission after client navigation cannot attach a sensor or revive the game", async ({
-  page,
-}) => {
-  const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
-  await ready(page);
-  await page.evaluate(() => {
-    window.__orientationListeners = 0;
-    const add = window.addEventListener.bind(window);
-    window.addEventListener = (type, ...args) => {
-      if (type === "deviceorientation") window.__orientationListeners++;
-      return add(type, ...args);
-    };
-    Object.defineProperty(DeviceOrientationEvent, "requestPermission", {
-      configurable: true,
-      value: () =>
-        new Promise((resolve) => {
-          window.__resolveTiltPermission = resolve;
-        }),
-    });
-  });
-  await page.getByRole("button", { name: "Tilt", exact: true }).click();
-  await expect.poll(async () => (await state(page)).tilt).toBe("requesting");
-  await page.getByRole("link", { name: "CONTACT-ABOUT", exact: true }).click();
-  await page.evaluate(() => window.__resolveTiltPermission("granted"));
-  await page.waitForTimeout(150);
-  await expect(page.locator("canvas")).toHaveCount(0);
-  expect(await page.evaluate(() => window.__orientationListeners)).toBe(0);
-  expect(errors).toEqual([]);
-});
-
 test("landing controls are translated and changing language does not restart the renderer", async ({
   page,
 }) => {
@@ -380,7 +291,7 @@ test("landing controls are translated and changing language does not restart the
     page.getByRole("button", { name: "Subir", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Inclinar", exact: true }),
+    page.getByRole("button", { name: "Reiniciar", exact: true }),
   ).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(1);
   expect((await state(page)).ready).toBe(true);

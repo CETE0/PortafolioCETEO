@@ -3,12 +3,15 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-r
 import { useEffect, useState, type ReactNode } from 'react'
 import appCss from '../styles.css?url'
 import { LanguageProvider } from '@/i18n/LanguageContext'
+import { detectLang } from '@/i18n/detect'
 import DesktopSidebar from '@/components/layout/DesktopSidebar'
 import MobileNav from '@/components/layout/MobileNav'
 import CustomCursor from '@/components/layout/CustomCursor'
 import { SITE } from '@/data/site'
 
 export const Route = createRootRoute({
+  // Resolved on the server so the first render is already in the visitor's language.
+  beforeLoad: () => ({ lang: detectLang() }),
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -43,8 +46,9 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const { lang } = Route.useRouteContext()
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>
@@ -57,6 +61,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 }
 
 function RootLayout() {
+  const { lang } = Route.useRouteContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
 
@@ -66,7 +71,7 @@ function RootLayout() {
   }, [menuOpen])
 
   return (
-    <LanguageProvider>
+    <LanguageProvider initialLang={lang}>
       <CustomCursor />
       <div className="flex h-screen min-h-screen bg-white">
         <div className="hidden h-full w-64 flex-none md:flex">

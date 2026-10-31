@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { dict, type Lang } from './dict'
+import { rememberLang } from './detect'
 
 type Params = Record<string, string | number>
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string, params?: Params) => string }
@@ -20,24 +21,21 @@ function lookup(lang: Lang, key: string): string | undefined {
   return typeof node === 'string' ? node : undefined
 }
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('en')
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem('lang')
-    if (stored === 'en' || stored === 'es') return setLangState(stored)
-    setLangState(navigator.language?.startsWith('es') ? 'es' : 'en')
-  }, [])
+export function LanguageProvider({ initialLang, children }: { initialLang: Lang; children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(initialLang)
 
   useEffect(() => {
     document.documentElement.lang = lang
-    window.localStorage.setItem('lang', lang)
   }, [lang])
 
   const value = useMemo<Ctx>(
     () => ({
       lang,
-      setLang: (next) => setLangState(next === 'es' ? 'es' : 'en'),
+      setLang: (next) => {
+        const l = next === 'es' ? 'es' : 'en'
+        rememberLang(l)
+        setLangState(l)
+      },
       t: (key, params) => interpolate(lookup(lang, key) ?? lookup('en', key) ?? key, params),
     }),
     [lang],

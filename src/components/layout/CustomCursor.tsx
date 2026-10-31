@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-/** Crosshair cursor: rotates on click, turns red over interactive elements. */
+/** Crosshair cursor: rotates on click, turns red over interactive elements and dark [data-cursor="red"] areas. */
 export default function CustomCursor() {
   useEffect(() => {
     const cursor = document.createElement('div')
@@ -29,7 +29,7 @@ export default function CustomCursor() {
       crosshair.style.transition = ''
     }
     const over = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.('a, button, [role="button"], .cursor-pointer')) cursor.classList.add('hover')
+      if ((e.target as Element)?.closest?.('a, button, [role="button"], .cursor-pointer, [data-cursor="red"]')) cursor.classList.add('hover')
     }
     const out = () => cursor.classList.remove('hover')
 

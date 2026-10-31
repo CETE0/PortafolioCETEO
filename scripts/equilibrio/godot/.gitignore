@@ -1,0 +1,5 @@
+.generated/
+.godot/
+.expect/
+.claude/
+*.uid

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Equilibrio — Godot</title>
+<style>
+html,body,canvas{margin:0;width:100%;height:100%;display:block;overflow:hidden;background:#121738}
+canvas{outline:none;image-rendering:pixelated;pointer-events:none}
+#status{position:fixed;inset:0;display:grid;place-items:center;color:#f5e8c7;font:12px system-ui;pointer-events:none}
+</style>
+$GODOT_HEAD_INCLUDE
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" aria-label="Godot Equilibrio benchmark"></canvas>
+<div id="status">Loading Godot…</div>
+<script>
+(() => {
+  const defaults = { x: 0, z: 0, jump: 0, raised: false, mode: 'dither', paused: false, demo: false, reset: 0 };
+  window.__equilibrioInput = { ...defaults };
+  const send = (type, fields = {}) => window.parent.postMessage({ source: 'equilibrio-godot', type, ...fields }, window.location.origin);
+  const finite = (value, fallback) => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  window.addEventListener('message', (event) => {
+    if (event.source !== window.parent || event.origin !== window.location.origin) return;
+    const data = event.data;
+    if (!data || data.source !== 'equilibrio-host' || data.type !== 'input') return;
+    const old = window.__equilibrioInput;
+    window.__equilibrioInput = {
+      x: Math.max(-1, Math.min(1, finite(data.x, old.x))),
+      z: Math.max(-1, Math.min(1, finite(data.z, old.z))),
+      jump: Math.max(0, Math.trunc(finite(data.jump, old.jump))),
+      reset: Math.max(0, Math.trunc(finite(data.reset, old.reset))),
+      raised: typeof data.raised === 'boolean' ? data.raised : old.raised,
+      paused: typeof data.paused === 'boolean' ? data.paused : old.paused,
+      demo: typeof data.demo === 'boolean' ? data.demo : old.demo,
+      mode: ['dither', 'ascii', 'solid'].includes(data.mode) ? data.mode : old.mode,
+    };
+  });
+  window.addEventListener('error', (event) => send('error', { message: event.message || 'Godot runtime error' }));
+  window.addEventListener('unhandledrejection', (event) => send('error', { message: String(event.reason) }));
+  window.__equilibrioSend = send;
+  const fetchFile = window.fetch.bind(window);
+  window.__equilibrioFetch = async (file) => {
+    if (!file.endsWith('.wasm')) return fetchFile(file);
+    const response = await fetchFile(file + '.gz');
+    if (!response.ok || !response.body) throw new Error(`Cannot load compressed Godot engine: HTTP ${response.status}`);
+    // Vite sends Content-Encoding: gzip and fetch has already decompressed it.
+    // Workers serves the stored .gz without that header, so decode only there.
+    let body = response.body;
+    if (!/\bgzip\b/i.test(response.headers.get('Content-Encoding') || '')) {
+      if (!('DecompressionStream' in window)) throw new Error('This Godot comparison needs a browser with gzip DecompressionStream support. The Three.js version remains available.');
+      body = body.pipeThrough(new DecompressionStream('gzip'));
+    }
+    return new Response(body, { headers: { 'Content-Type': 'application/wasm' } });
+  };
+  // Host owns every input. Prevent the engine canvas from stealing keyboard/touch focus.
+  for (const name of ['keydown', 'keyup', 'touchstart', 'touchmove', 'touchend', 'pointerdown']) {
+    window.addEventListener(name, (event) => { event.stopImmediatePropagation(); }, { capture: true, passive: true });
+  }
+})();
+</script>
+<script src="$GODOT_URL"></script>
+<script>
+const config = $GODOT_CONFIG;
+config.ensureCrossOriginIsolationHeaders = false;
+const engine = new Engine(config);
+const statusElement = document.getElementById('status');
+engine.startGame({
+  canvas: document.getElementById('canvas'),
+  canvasResizePolicy: 2,
+  focusCanvas: false,
+  onPrintError: (...args) => {
+    const message = args.join(' ');
+    console.error(message);
+    if (/error|failed|exception/i.test(message)) window.__equilibrioSend('error', { message });
+  },
+  onProgress: (loaded, total) => {
+    statusElement.textContent = total > 0 ? `Loading Godot… ${Math.round(loaded / total * 100)}%` : 'Loading Godot…';
+  },
+}).then(() => statusElement.remove()).catch((error) => {
+  const message = String(error);
+  statusElement.textContent = message;
+  window.__equilibrioSend('error', { message });
+});
+</script>
+</body>
+</html>

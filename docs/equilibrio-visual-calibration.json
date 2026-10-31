@@ -1,0 +1,48 @@
+{
+  "note": "1280x900 Chromium, 960x468 stage, dither mode, original neutral character. The upper-region metric uses the upper half of the gray geometry mask inferred from the Unshaded capture, not mesh IDs or exact face segmentation. Different idle-animation capture phases cause small variation. These image-readability checks are not GPU performance measurements or proof of pixel-identical renderers.",
+  "baseline": {
+    "three": {
+      "objectIvoryCoverage": 0.22403847960468218,
+      "upperRegionIvoryCoverage": 0.28747913188647745
+    },
+    "godot": {
+      "objectIvoryCoverage": 0.5393025837896837,
+      "upperRegionIvoryCoverage": 0.6474971971245795
+    }
+  },
+  "selectedThreeJsPolish": {
+    "three": {
+      "objectIvoryCoverage": 0.5323747768066911,
+      "upperRegionIvoryCoverage": 0.6217987295218991,
+      "paletteCoverage": 1
+    },
+    "godot": {
+      "objectIvoryCoverage": 0.5386835700945158,
+      "upperRegionIvoryCoverage": 0.6397965173155938,
+      "paletteCoverage": 1
+    }
+  },
+  "websitePrintPass": {
+    "nativePalette": "carbon",
+    "nativeGrain": 2,
+    "nativeInks": ["#141414", "#f5f3ec"],
+    "three": {
+      "objectIvoryCoverage": 0.5134002405653285,
+      "upperRegionIvoryCoverage": 0.6042251637919508,
+      "paletteCoverage": 1
+    },
+    "godot": {
+      "objectIvoryCoverage": 0.5384629895118086,
+      "upperRegionIvoryCoverage": 0.6389359760073021,
+      "paletteCoverage": 1
+    }
+  },
+  "regressionTolerance": {
+    "maxCoverageDifference": 0.08,
+    "minNativePaletteCoverage": 0.99
+  },
+  "screenshots": {
+    "three": "images/equilibrio/three-dither.png",
+    "godotReference": "images/equilibrio/godot-reference.png"
+  }
+}

@@ -12,6 +12,7 @@ const routes = [
   ['/texts/statement', 200],
   ['/experimental', 200],
   ['/experimental/coinpush', 200],
+  ['/experimental/equilibrio', 200],
   ['/experimental/empuja-monedas', 200],
   ...Object.entries(projects).flatMap(([category, items]) =>
     Object.keys(items).map((id) => [`/${category}/${encodeURIComponent(id)}`, 200]),

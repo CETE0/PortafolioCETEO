@@ -45,6 +45,26 @@ export const dict = {
         title: 'empuja monedas',
         hint: 'TYPE + ENTER · SPACE DROP · ARROWS / MOUSE ROTATE',
       },
+      equilibrio: {
+        title: 'Equilibrio',
+        stage: 'Pícaro. Focus to use the keyboard.',
+        keyboard: 'WASD MOVE · SPACE HOP · E RAISE',
+        touch: 'DRAG MOVE · TAP RAISE',
+        raise: 'Raise',
+        lower: 'Lower',
+        pause: 'Pause',
+        resume: 'Play',
+        recenter: 'Reset',
+        enableTilt: 'Tilt',
+        disableTilt: 'Tilt off',
+        calibrating: 'Calibrating…',
+        tiltUnavailable: 'No tilt',
+        tiltDenied: 'Tilt denied',
+        tiltNoReadings: 'No tilt readings',
+        loading: 'Loading…',
+        unavailable: 'Could not load',
+        retry: 'Retry',
+      },
       shooter: {
         hint: 'CLICK PLAY · MOUSE AIM · CLICK SHOOT · ESC EXIT',
         clickToPlay: 'CLICK TO PLAY',
@@ -53,7 +73,8 @@ export const dict = {
       },
     },
     experimental: {
-      warning: 'These projects may affect browser performance or redirect you externally.',
+      warning:
+        'These projects may affect browser performance or redirect you externally.',
     },
   },
   es: {
@@ -87,7 +108,11 @@ export const dict = {
       aboutText:
         'Mateo Cereceda es un artista de nuevos medios radicado en Santiago, Chile. Actualmente trabaja en la intersección entre el arte digital y la instalación escultórica experimental.',
     },
-    modal: { close: 'Cerrar', prev: 'Imagen anterior', next: 'Imagen siguiente' },
+    modal: {
+      close: 'Cerrar',
+      prev: 'Imagen anterior',
+      next: 'Imagen siguiente',
+    },
     games: {
       score: 'PUNTOS',
       high: 'RÉCORD',
@@ -102,6 +127,26 @@ export const dict = {
         title: 'empuja monedas',
         hint: 'ESCRIBE + ENTER · ESPACIO SOLTAR · FLECHAS / MOUSE GIRAR',
       },
+      equilibrio: {
+        title: 'Equilibrio',
+        stage: 'Pícaro. Enfoca para usar el teclado.',
+        keyboard: 'WASD MOVER · ESPACIO SALTAR · E SUBIR',
+        touch: 'ARRASTRA MOVER · TOCA SUBIR',
+        raise: 'Subir',
+        lower: 'Bajar',
+        pause: 'Pausar',
+        resume: 'Jugar',
+        recenter: 'Reiniciar',
+        enableTilt: 'Inclinar',
+        disableTilt: 'Sin inclinar',
+        calibrating: 'Calibrando…',
+        tiltUnavailable: 'Sin inclinación',
+        tiltDenied: 'Inclinación denegada',
+        tiltNoReadings: 'Sin lecturas',
+        loading: 'Cargando…',
+        unavailable: 'No se pudo cargar',
+        retry: 'Reintentar',
+      },
       shooter: {
         hint: 'CLICK JUGAR · MOUSE APUNTAR · CLICK DISPARAR · ESC SALIR',
         clickToPlay: 'CLICK PARA JUGAR',
@@ -110,7 +155,8 @@ export const dict = {
       },
     },
     experimental: {
-      warning: 'Estos proyectos pueden afectar el rendimiento del navegador o redirigirte externamente.',
+      warning:
+        'Estos proyectos pueden afectar el rendimiento del navegador o redirigirte externamente.',
     },
   },
 } as const

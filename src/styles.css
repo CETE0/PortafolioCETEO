@@ -32,7 +32,7 @@ body { font-family: var(--font-sans); }
 @media (hover: hover) and (pointer: fine) {
   body { cursor: none; }
   .custom-cursor { display: block; }
-  a, button, [role="button"], .cursor-pointer { cursor: none; }
+  a, button, [role="button"], .cursor-pointer, .cursor-zoom-in, .cursor-zoom-out { cursor: none; }
 }
 
 /* Mobile menu attention wiggle — crude/mechanical */

@@ -15,6 +15,7 @@ import { Route as CategoryProjectRouteImport } from './routes/$category.$project
 import { Route as ExperimentalIndexRouteImport } from './routes/experimental.index'
 import { Route as ExperimentalCoinpushRouteImport } from './routes/experimental.coinpush'
 import { Route as ExperimentalEmpujaMonedasRouteImport } from './routes/experimental.empuja-monedas'
+import { Route as ExperimentalEquilibrioRouteImport } from './routes/experimental.equilibrio'
 import { Route as TextsStatementRouteImport } from './routes/texts.statement'
 
 const IndexRoute = IndexRouteImport.update({
@@ -48,6 +49,11 @@ const ExperimentalEmpujaMonedasRoute =
     path: '/experimental/empuja-monedas',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ExperimentalEquilibrioRoute = ExperimentalEquilibrioRouteImport.update({
+  id: '/experimental/equilibrio',
+  path: '/experimental/equilibrio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TextsStatementRoute = TextsStatementRouteImport.update({
   id: '/texts/statement',
   path: '/texts/statement',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/$category/$project': typeof CategoryProjectRoute
   '/experimental/coinpush': typeof ExperimentalCoinpushRoute
   '/experimental/empuja-monedas': typeof ExperimentalEmpujaMonedasRoute
+  '/experimental/equilibrio': typeof ExperimentalEquilibrioRoute
   '/texts/statement': typeof TextsStatementRoute
   '/experimental/': typeof ExperimentalIndexRoute
 }
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/$category/$project': typeof CategoryProjectRoute
   '/experimental/coinpush': typeof ExperimentalCoinpushRoute
   '/experimental/empuja-monedas': typeof ExperimentalEmpujaMonedasRoute
+  '/experimental/equilibrio': typeof ExperimentalEquilibrioRoute
   '/texts/statement': typeof TextsStatementRoute
   '/experimental': typeof ExperimentalIndexRoute
 }
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/$category/$project': typeof CategoryProjectRoute
   '/experimental/coinpush': typeof ExperimentalCoinpushRoute
   '/experimental/empuja-monedas': typeof ExperimentalEmpujaMonedasRoute
+  '/experimental/equilibrio': typeof ExperimentalEquilibrioRoute
   '/texts/statement': typeof TextsStatementRoute
   '/experimental/': typeof ExperimentalIndexRoute
 }
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/$category/$project'
     | '/experimental/coinpush'
     | '/experimental/empuja-monedas'
+    | '/experimental/equilibrio'
     | '/texts/statement'
     | '/experimental/'
   fileRoutesByTo: FileRoutesByTo
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/$category/$project'
     | '/experimental/coinpush'
     | '/experimental/empuja-monedas'
+    | '/experimental/equilibrio'
     | '/texts/statement'
     | '/experimental'
   id:
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/$category/$project'
     | '/experimental/coinpush'
     | '/experimental/empuja-monedas'
+    | '/experimental/equilibrio'
     | '/texts/statement'
     | '/experimental/'
   fileRoutesById: FileRoutesById
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   CategoryProjectRoute: typeof CategoryProjectRoute
   ExperimentalCoinpushRoute: typeof ExperimentalCoinpushRoute
   ExperimentalEmpujaMonedasRoute: typeof ExperimentalEmpujaMonedasRoute
+  ExperimentalEquilibrioRoute: typeof ExperimentalEquilibrioRoute
   TextsStatementRoute: typeof TextsStatementRoute
   ExperimentalIndexRoute: typeof ExperimentalIndexRoute
 }
@@ -166,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperimentalEmpujaMonedasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/experimental/equilibrio': {
+      id: '/experimental/equilibrio'
+      path: '/experimental/equilibrio'
+      fullPath: '/experimental/equilibrio'
+      preLoaderRoute: typeof ExperimentalEquilibrioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/texts/statement': {
       id: '/texts/statement'
       path: '/texts/statement'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoryProjectRoute: CategoryProjectRoute,
   ExperimentalCoinpushRoute: ExperimentalCoinpushRoute,
   ExperimentalEmpujaMonedasRoute: ExperimentalEmpujaMonedasRoute,
+  ExperimentalEquilibrioRoute: ExperimentalEquilibrioRoute,
   TextsStatementRoute: TextsStatementRoute,
   ExperimentalIndexRoute: ExperimentalIndexRoute,
 }

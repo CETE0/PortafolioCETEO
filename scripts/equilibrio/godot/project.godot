@@ -1,0 +1,27 @@
+config_version=5
+
+[application]
+config/name="Equilibrio — Godot"
+run/main_scene="res://equilibrio.tscn"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+
+[display]
+window/size/viewport_width=576
+window/size/viewport_height=432
+window/stretch/mode="canvas_items"
+window/handheld/orientation=6
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.07, 0.09, 0.22, 1)
+
+[audio]
+driver/enable_input=false
+
+[physics]
+common/physics_ticks_per_second=60
+
+[debug]
+gdscript/warnings/unused_signal=0

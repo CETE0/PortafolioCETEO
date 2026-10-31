@@ -1,0 +1,74 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Equilibrio Godot protocol test</title>
+<style>body{background:#121738;color:#f5e8c7;font:14px system-ui}iframe{border:1px solid #f5e8c7;width:768px;height:576px}button,select{margin:4px;padding:8px}pre{white-space:pre-wrap}</style>
+<h1>Godot iframe protocol test</h1>
+<div>
+<button id="demo">Demo</button><button id="stop">Stop</button><button id="jump">Jump</button><button id="raised">Raised</button><button id="pause">Pause</button><button id="reset">Reset</button><button id="fall">Walk off edge</button><button id="portrait">Portrait</button><button id="run">Run adversarial checks</button>
+<select id="mode"><option>dither</option><option>ascii</option><option>solid</option></select>
+</div>
+<iframe id="game" src="/equilibrio/godot/index.html"></iframe>
+<pre id="status">Waiting for ready…</pre><pre id="results"></pre>
+<script>
+const game = document.getElementById('game');
+const status = document.getElementById('status');
+const results = document.getElementById('results');
+const state = {source:'equilibrio-host',type:'input',x:0,z:0,jump:0,raised:false,mode:'dither',paused:false,demo:false,reset:0};
+const messages = [];
+window.testMessages = messages;
+let ready = false;
+let stats;
+function send(patch = {}) { Object.assign(state,patch); game.contentWindow.postMessage(state,location.origin); }
+window.sendInput = send;
+addEventListener('message',event=>{
+ if(event.source!==game.contentWindow || event.origin!==location.origin || event.data?.source!=='equilibrio-godot')return;
+ messages.push(event.data);
+ if(event.data.type==='ready'){ready=true;send();}
+ if(event.data.type==='stats')stats=event.data;
+ status.textContent=JSON.stringify(event.data,null,2);
+});
+document.getElementById('demo').onclick=()=>send({demo:true,x:0,z:0});
+document.getElementById('stop').onclick=()=>send({demo:false,x:0,z:0});
+document.getElementById('jump').onclick=()=>send({jump:state.jump+1});
+document.getElementById('raised').onclick=()=>send({raised:!state.raised});
+document.getElementById('pause').onclick=()=>send({paused:!state.paused});
+document.getElementById('reset').onclick=()=>send({reset:state.reset+1,x:0,z:0});
+document.getElementById('fall').onclick=()=>send({demo:false,x:1,z:0});
+document.getElementById('portrait').onclick=()=>{game.style.width='384px';game.style.height='700px';};
+document.getElementById('mode').onchange=event=>send({mode:event.target.value});
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const check=(condition,label)=>{results.textContent+=`${condition?'PASS':'FAIL'} ${label}\n`;if(!condition)throw Error(label);};
+window.runChecks = async () => {
+ results.textContent='';
+ check(ready,'ready after first scene frame');
+ send({demo:false,x:0,z:0,paused:false,raised:false,reset:state.reset+1});
+ await sleep(1400);
+ check(stats?.grounded && Math.abs(stats.y-.96)<.03,'standing at original foot pivot');
+ const initial=stats.x;
+ send({x:.3});await sleep(1000);send({x:0});await sleep(1100);
+ check(stats.x>initial+.7,'world x movement responds');
+ const beforePause={x:stats.x,y:stats.y,z:stats.z};
+ send({paused:true,x:1});await sleep(2200);
+ check(Math.abs(stats.x-beforePause.x)<.08 && Math.abs(stats.y-beforePause.y)<.08,'pause freezes simulation; stats/input still alive');
+ send({paused:false,x:0,jump:state.jump+1});await sleep(100);send({paused:true});await sleep(1200);
+ check(stats.y>1.2,'resume accepts jump counter and hop is airborne');
+ send({paused:false,x:0,reset:state.reset+1});await sleep(1200);
+ const falls=stats.fallCount;
+ send({x:1});
+ for(let i=0;i<80 && stats.fallCount===falls;i++)await sleep(100);
+ send({x:0,reset:state.reset+1});await sleep(1200);
+ check(stats.fallCount>falls,'edge fall increments count and auto resets');
+ for(const mode of ['ascii','solid','dither']){send({mode,raised:mode==='ascii'});await sleep(800);check(!messages.some(m=>m.type==='error'),`${mode} and original extension tracks without runtime errors`);}
+ send({reset:state.reset+1,demo:true});await sleep(7000);
+ check(stats.fallCount===falls+1,'bounded deterministic demo walks and hops without falling');
+ send({demo:false,x:0,z:0,reset:state.reset+1});
+ const before=game.contentWindow.__equilibrioInput.x;
+ game.contentWindow.eval(`window.postMessage(${JSON.stringify({...state,x:1})}, location.origin)`);await sleep(100);
+ check(game.contentWindow.__equilibrioInput.x===before,'self-origin non-parent sender rejected');
+ send({x:NaN,z:Infinity,mode:'invalid'});await sleep(200);
+ check(Number.isFinite(game.contentWindow.__equilibrioInput.x)&&game.contentWindow.__equilibrioInput.mode==='dither','invalid numbers and unknown mode sanitized');
+ check(!messages.some(m=>m.type==='error'),'no reported Godot errors');
+ results.textContent+='DONE\n';
+};
+document.getElementById('run').onclick=()=>runChecks().catch(error=>{results.textContent+=`${error}\n`;});
+</script>

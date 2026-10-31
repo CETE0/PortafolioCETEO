@@ -1,0 +1,101 @@
+{
+  "note": "Flat reference-scene diagnostics in headless Chromium using SwiftShader, not a physical-phone or production balance-game benchmark. Frame intervals are not GPU timings. Both reference measurements use 1x grain; the native landing default remains 2x. Startup is cache-sensitive. Resource rows are selected engine requests, not a complete homepage transfer inventory; see equilibrio-asset-sizes.json for compiled dependency accounting. Real-phone sensor, sustained frame-rate, thermal and battery checks remain required before deployment.",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "viewport": {
+    "width": 1280,
+    "height": 900,
+    "dpr": 1
+  },
+  "results": [
+    {
+      "engine": "three",
+      "mode": "dither",
+      "palette": "carbon",
+      "grain": 1,
+      "readyMs": 122.19999980926514,
+      "measuredAt": "2026-10-31T05:06:10.055Z",
+      "durationSeconds": 15.002900000095368,
+      "frames": {
+        "samples": 614,
+        "fps": 40.91260428049788,
+        "frameMs": 24.442345276872963,
+        "p95FrameMs": 26,
+        "longFrames": 0
+      },
+      "resources": [
+        {
+          "url": "/assets/ThreeStudy-DRKLpbxi.js",
+          "encodedBytes": 21678,
+          "transferredBytes": 21978,
+          "durationMs": 4.099999904632568
+        },
+        {
+          "url": "/assets/three.module-C-8bczWu.js",
+          "encodedBytes": 513407,
+          "transferredBytes": 513707,
+          "durationMs": 6.400000095367432
+        },
+        {
+          "url": "/assets/RenderPass-BL1JMYhv.js",
+          "encodedBytes": 6545,
+          "transferredBytes": 6845,
+          "durationMs": 6.5
+        },
+        {
+          "url": "/equilibrio/models/Base.obj",
+          "encodedBytes": 123594,
+          "transferredBytes": 123894,
+          "durationMs": 4.099999904632568
+        },
+        {
+          "url": "/equilibrio/models/Caja.obj",
+          "encodedBytes": 422912,
+          "transferredBytes": 423212,
+          "durationMs": 4.700000286102295
+        },
+        {
+          "url": "/equilibrio/models/Tubo.obj",
+          "encodedBytes": 11080,
+          "transferredBytes": 11380,
+          "durationMs": 6.5
+        }
+      ]
+    },
+    {
+      "engine": "godot",
+      "mode": "dither",
+      "palette": "godot-reference",
+      "grain": 1,
+      "readyMs": 1180.6999998092651,
+      "measuredAt": "2026-10-31T05:06:35.487Z",
+      "durationSeconds": 15.0805,
+      "frames": {
+        "samples": 498,
+        "fps": 32.823406120444815,
+        "frameMs": 30.466064257028066,
+        "p95FrameMs": 33.3333333333333,
+        "longFrames": 6
+      },
+      "resources": [
+        {
+          "url": "/equilibrio/godot/index.js",
+          "encodedBytes": 305204,
+          "transferredBytes": 305504,
+          "durationMs": 7.799999713897705
+        },
+        {
+          "url": "/equilibrio/godot/index.wasm.gz",
+          "encodedBytes": 9237412,
+          "transferredBytes": 9237712,
+          "durationMs": 98.19999980926514
+        },
+        {
+          "url": "/equilibrio/godot/index.pck",
+          "encodedBytes": 319228,
+          "transferredBytes": 319528,
+          "durationMs": 20.699999809265137
+        }
+      ]
+    }
+  ]
+}

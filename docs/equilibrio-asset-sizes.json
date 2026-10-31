@@ -1,0 +1,137 @@
+{
+  "measuredAt": "2026-10-31T05:05:22.761Z",
+  "note": "Scene payloads excluding the shared portfolio/React/router shell. Three follows the full emitted renderer dependency graph plus original OBJ files. Landing also includes the native landing/controls module, excluding shared index/jsx-runtime chunks. Gzip is a level-9 estimate, not a claim about actual HTTP encoding. A .gz file is already compressed; its raw size is its stored transport payload. Godot is null if its optional local export has not been built.",
+  "three": {
+    "files": [
+      {
+        "path": "dist/client/assets/ThreeStudy-DRKLpbxi.js",
+        "rawBytes": 21678,
+        "gzipBytes": 8273
+      },
+      {
+        "path": "dist/client/assets/three.module-C-8bczWu.js",
+        "rawBytes": 513407,
+        "gzipBytes": 125870
+      },
+      {
+        "path": "dist/client/assets/appearance-D3h8iKau.js",
+        "rawBytes": 946,
+        "gzipBytes": 426
+      },
+      {
+        "path": "dist/client/assets/simulation-hzNMoMs7.js",
+        "rawBytes": 2927,
+        "gzipBytes": 1362
+      },
+      {
+        "path": "dist/client/assets/RenderPass-BL1JMYhv.js",
+        "rawBytes": 6545,
+        "gzipBytes": 1984
+      },
+      {
+        "path": "public/equilibrio/models/Base.obj",
+        "rawBytes": 123594,
+        "gzipBytes": 38080
+      },
+      {
+        "path": "public/equilibrio/models/Caja.obj",
+        "rawBytes": 422912,
+        "gzipBytes": 123365
+      },
+      {
+        "path": "public/equilibrio/models/Tubo.obj",
+        "rawBytes": 11080,
+        "gzipBytes": 2631
+      }
+    ],
+    "rawBytes": 1103089,
+    "gzipBytes": 301991
+  },
+  "landing": {
+    "files": [
+      {
+        "path": "dist/client/assets/ThreeStudy-DRKLpbxi.js",
+        "rawBytes": 21678,
+        "gzipBytes": 8273
+      },
+      {
+        "path": "dist/client/assets/three.module-C-8bczWu.js",
+        "rawBytes": 513407,
+        "gzipBytes": 125870
+      },
+      {
+        "path": "dist/client/assets/appearance-D3h8iKau.js",
+        "rawBytes": 946,
+        "gzipBytes": 426
+      },
+      {
+        "path": "dist/client/assets/simulation-hzNMoMs7.js",
+        "rawBytes": 2927,
+        "gzipBytes": 1362
+      },
+      {
+        "path": "dist/client/assets/RenderPass-BL1JMYhv.js",
+        "rawBytes": 6545,
+        "gzipBytes": 1984
+      },
+      {
+        "path": "public/equilibrio/models/Base.obj",
+        "rawBytes": 123594,
+        "gzipBytes": 38080
+      },
+      {
+        "path": "public/equilibrio/models/Caja.obj",
+        "rawBytes": 422912,
+        "gzipBytes": 123365
+      },
+      {
+        "path": "public/equilibrio/models/Tubo.obj",
+        "rawBytes": 11080,
+        "gzipBytes": 2631
+      },
+      {
+        "path": "dist/client/assets/EquilibrioLanding-DK8XNj5z.js",
+        "rawBytes": 11722,
+        "gzipBytes": 4326
+      }
+    ],
+    "rawBytes": 1114811,
+    "gzipBytes": 306317
+  },
+  "godot": {
+    "files": [
+      {
+        "path": "public/equilibrio/godot/index.audio.position.worklet.js",
+        "rawBytes": 2973,
+        "gzipBytes": 1161
+      },
+      {
+        "path": "public/equilibrio/godot/index.audio.worklet.js",
+        "rawBytes": 7298,
+        "gzipBytes": 2194
+      },
+      {
+        "path": "public/equilibrio/godot/index.html",
+        "rawBytes": 4607,
+        "gzipBytes": 2054
+      },
+      {
+        "path": "public/equilibrio/godot/index.js",
+        "rawBytes": 305204,
+        "gzipBytes": 77065
+      },
+      {
+        "path": "public/equilibrio/godot/index.pck",
+        "rawBytes": 319228,
+        "gzipBytes": 226148
+      },
+      {
+        "path": "public/equilibrio/godot/index.wasm.gz",
+        "rawBytes": 9237412,
+        "gzipBytes": 9237412
+      }
+    ],
+    "rawBytes": 9876722,
+    "gzipBytes": 9546034
+  }
+}

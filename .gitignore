@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
 
 # build output
 /.output/
@@ -40,3 +42,8 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Reproducible, local-only Godot renderer comparison exports
+/public/equilibrio/godot/
+/scripts/equilibrio/godot/.godot/
+/.equilibrio-build/
